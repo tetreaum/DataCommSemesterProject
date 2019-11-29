@@ -16,10 +16,10 @@ print_lock = threading.Lock()
 def threaded(c): 
     while True: 
   
-        # data received from client 
+        # data received from client
         data = c.recv(1024) 
         if not data: 
-            print('Client Disconnected') 
+            print('Client Disconnected')
               
             # lock released on exit 
             print_lock.release() 
@@ -53,13 +53,18 @@ def Main():
   
         # establish connection with client 
         c, addr = s.accept() 
-  
+
+        #Creat arrays for ListHosts and FileLists
+        listHost = []
+        fileLists = []
+
         # lock acquired by client 
         print_lock.acquire() 
         print('Connected to :', addr[0], ':', addr[1]) 
   
         # Start a new thread and return its identifier 
-        start_new_thread(threaded, (c,)) 
+     #   start_new_thread(threaded, (c,), listHost, fileLists)
+        start_new_thread(threaded, (c,))
     s.close() 
   
   
