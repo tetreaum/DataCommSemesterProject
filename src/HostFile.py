@@ -1,6 +1,6 @@
 class HostFile:
     def __init__(self, name, user, port, speed, hostname, keywords):
-        self.name = name # instance variable unique to each instance
+        self.name = name  # instance variable unique to each instance
         self.user = user
         self.port = port
         self.speed = speed

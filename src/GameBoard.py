@@ -1,14 +1,13 @@
 import random
-import java.util.Arrays;
+
 
 class GameBoard:
-	placeInDeck
-	deck = [None] * 24
-	discardPile = [10,11,12,13,20,21,22,23,30,31,32,33,40,41,42,43,50,51,52,53,60,61,62,63]
-	trump = 0
-	
-	
-	def  __init__():
+	  placeInDeck
+	  deck = [None] * 24
+	  discardPile = [10,11,12,13,20,21,22,23,30,31,32,33,40,41,42,43,50,51,52,53,60,61,62,63]
+	  trump = 0
+	  
+	  def  __init__():
 
 		shuffleDeck()
 
@@ -16,17 +15,6 @@ class GameBoard:
 
 
 	def gameRound():
-
-
-
-
-
-
-
-
-
-
-
 	#loop through the game logic
 
 
@@ -50,33 +38,3 @@ class GameBoard:
 				if deck[r1] == None:
 					deck[r1] == discardPile[i]
 					filled == True
-
-
-			
-		
-
-
-
-
-
-
-
-
-		
-	
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
