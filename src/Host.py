@@ -1,64 +1,90 @@
 """
-A file to hold the GUI logic and instantiation of the host server.
+A file to hold the GUI logic and instantiation of the host server. When the user connects to the
+CentralServer with the intent to host games it will start a new instance of HostServerThread.
+HostServerThread will then create HostServerWorkerThreads as it receives connections from outside.
+After Host has created its own HostServer it will then connect to itself through a socket so all
+players can be handled the same way.
 """
 import tkinter as tk
 import tkinter.font
-import requests
 from PIL import Image
 from PIL import ImageTk
 
-HEIGHT = 500
-WIDTH = 600
+HEIGHT = 750
+WIDTH = 800
 
 
-def formatResponse(weather):
-    print(weather)
-    try:
-        name = weather['name']
-        desc = weather['weather'][0]['description']
-        temp = weather['main']['temp']
-        finalStr = 'City: %s \nConditions: %s \nTempurature (F): %s' % (name, desc, temp)
-    except:
-        finalStr = 'There was a problem D:\nPlease make sure that\n you have provided a City!'
-    return finalStr
+class Host():
+    name = ""
+    myIP = ""
+    myPort = ""
+    serverIP = ""
+    serverPort = ""
 
 
-def getWeather(city):
-    weatherKey = 'd086d319958263c0e741472bc37d784f'
-    url = 'https://api.openweathermap.org/data/2.5/weather'
-    params = {'APPID': weatherKey, 'q': city, 'units': 'imperial'}
-    response = requests.get(url, params)
-    print('url: %s%s' % (url, params))
-    weather = response.json()
-    # change label to be correct info or error message
-    label['text'] = formatResponse(weather)
+def connect(name, myIP, myPort, serverIP, serverPort):
+    consoleDisplay['text'] = name
+    print("DONE")
 
+
+def testMethod2(message):
+    consoleDisplay['text'] = message
+    print("DONE2")
+
+
+ourHost = Host
 
 root = tk.Tk()
 
 canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH)
 canvas.pack()
 
-photoImg = Image.open('AnimeBackgroundWhiteHair.jpg')
+photoImg = Image.open('BackgroundImage.jpg')
 photoImg = photoImg.resize((WIDTH, HEIGHT), Image.ANTIALIAS)
 
 background_image = ImageTk.PhotoImage(photoImg)
 background_label = tk.Label(root, image=background_image)
 background_label.place(relwidth=1, relheight=1)
 
-frame = tk.Frame(root, bg='#80c1ff', bd=5)
-frame.place(relx=0.5, rely=0.1, relwidth=0.75, relheight=0.1, anchor='n')
+# Frames for orgranizing GUI
+nameFrame = tk.Frame(root, bg='#80c1ff', bd=5)
+nameFrame.place(relx=0.06666, rely=0.05, relwidth=0.4, relheight=0.075)
 
-entry = tk.Entry(frame, font=40)
-entry.place(relwidth=0.65, relheight=1)
+myIPFrame = tk.Frame(root, bg='#ff0000', bd=5)
+myIPFrame.place(relx=0.53333, rely=0.05, relwidth=0.4, relheight=0.075)
 
-button = tk.Button(frame, text="Get Weather", font=('Courier', 12), command=lambda: getWeather(entry.get()))
-button.place(relx=0.7, relheight=1, relwidth=0.3)
+myPortFrame = tk.Frame(root, bg='#00ff00', bd=5)
+myPortFrame.place(relx=0.06666, rely=0.175, relwidth=0.4, relheight=0.075)
 
-lower_frame = tk.Frame(root, bg='#80c1ff', bd=10)
-lower_frame.place(relx=0.5, rely=0.25, relwidth=0.75, relheight=0.6, anchor='n')
+serverIPFrame = tk.Frame(root, bg='#0000ff', bd=5)
+serverIPFrame.place(relx=0.53333, rely=0.175, relwidth=0.4, relheight=0.075)
 
-label = tk.Label(lower_frame, font=('Courier', 18))
-label.place(relwidth=1, relheight=1)
+serverPortFrame = tk.Frame(root, bg='#ffffff', bd=5)
+serverPortFrame.place(relx=0.06666, rely=0.3, relwidth=0.4, relheight=0.075)
+
+connectButtonFrame = tk.Frame(root, bg='#000000', bd=5)
+connectButtonFrame.place(relx=0.53333, rely=0.3, relwidth=0.4, relheight=0.075)
+
+consoleFrame = tk.Frame(root, bg='#80c1ff', bd=10)
+consoleFrame.place(relx=0.06666, rely=0.425, relwidth=0.86668, relheight=0.5)
+
+# Filling Frames!
+nameLabel = tk.Label(nameFrame, font=('Courier', 12), text='User Name: ')
+nameLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
+
+nameEntry = tk.Entry(nameFrame, font=('Courier', 12))
+nameEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
+
+myIPEntry = tk.Entry(myIPFrame, font=('Courier', 12))
+nameEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
+
+# connectButton = tk.Button(connectButtonFrame, text="Connect", font=('Courier', 12), command=lambda: connect(myIPEntry.get(), "hi", "hi", "hi", "hi"))
+# connectButton.place(relx=0.7, relheight=1, relwidth=0.3)
+
+# executeButton = tk.Button(e, text="Execute", font=('Courier', 12), command=lambda: testMethod2(nameEntry.get()))
+# executeButton.place(relx=0.8, relheight=1, relwidth=0.3)
+
+# consoleDisplay = tk.Label(consoleFrame, font=('Courier', 12))
+# consoleDisplay.place(relwidth=1, relheight=1)
 
 root.mainloop()
