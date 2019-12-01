@@ -5,7 +5,7 @@ Server takes client input, reverses it, and sends it back.
 """
 # import socket programming library
 import socket
-import _thread
+import _thread as thread
 # import thread module
 
 import threading
@@ -65,9 +65,9 @@ def Main():
 
         # Start a new thread and return its identifier
         # start_new_thread(threaded, (c,), listHost, fileLists)
-        start_new_thread(threaded, (c,))
+        thread.start_new_thread(threaded, (c,))
     s.close()
 
 
-if __name__ == '__main__': 
-    Main() 
+if __name__ == '__main__':
+    Main()
