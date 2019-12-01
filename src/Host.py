@@ -4,6 +4,7 @@ CentralServer with the intent to host games it will start a new instance of Host
 HostServerThread will then create HostServerWorkerThreads as it receives connections from outside.
 After Host has created its own HostServer it will then connect to itself through a socket so all
 players can be handled the same way.
+Run pip install pillow in the command line to access PIL
 """
 import tkinter as tk
 import tkinter.font
@@ -23,12 +24,12 @@ class Host():
 
 
 def connect(name, myIP, myPort, serverIP, serverPort):
-    consoleDisplay['text'] = name
+    consoleDisplay['text'] = "username: " + name + "\nmyIP: " + myIP + "\nmyPort: " + myPort + "\nserverIP: " + serverIP + "\nserverPort: " + serverPort
     print("DONE")
 
 
-def testMethod2(message):
-    consoleDisplay['text'] = message
+def executeCommand(consoleEntry):
+    consoleDisplay['text'] = consoleEntry
     print("DONE2")
 
 
@@ -51,40 +52,64 @@ nameFrame = tk.Frame(root, bg='#80c1ff', bd=5)
 nameFrame.place(relx=0.06666, rely=0.05, relwidth=0.4, relheight=0.075)
 
 myIPFrame = tk.Frame(root, bg='#ff0000', bd=5)
-myIPFrame.place(relx=0.53333, rely=0.05, relwidth=0.4, relheight=0.075)
+myIPFrame.place(relx=0.06666, rely=0.175, relwidth=0.4, relheight=0.075)
 
-myPortFrame = tk.Frame(root, bg='#00ff00', bd=5)
-myPortFrame.place(relx=0.06666, rely=0.175, relwidth=0.4, relheight=0.075)
+myPortFrame = tk.Frame(root, bg='#000000', bd=5)
+myPortFrame.place(relx=0.06666, rely=0.3, relwidth=0.4, relheight=0.075)
 
 serverIPFrame = tk.Frame(root, bg='#0000ff', bd=5)
-serverIPFrame.place(relx=0.53333, rely=0.175, relwidth=0.4, relheight=0.075)
+serverIPFrame.place(relx=0.53333, rely=0.05, relwidth=0.4, relheight=0.075)
 
 serverPortFrame = tk.Frame(root, bg='#ffffff', bd=5)
-serverPortFrame.place(relx=0.06666, rely=0.3, relwidth=0.4, relheight=0.075)
+serverPortFrame.place(relx=0.53333, rely=0.175, relwidth=0.4, relheight=0.075)
 
-connectButtonFrame = tk.Frame(root, bg='#000000', bd=5)
+connectButtonFrame = tk.Frame(root, bg='#00ff00', bd=5)
 connectButtonFrame.place(relx=0.53333, rely=0.3, relwidth=0.4, relheight=0.075)
 
 consoleFrame = tk.Frame(root, bg='#80c1ff', bd=10)
 consoleFrame.place(relx=0.06666, rely=0.425, relwidth=0.86668, relheight=0.5)
 
 # Filling Frames!
-nameLabel = tk.Label(nameFrame, font=('Courier', 12), text='User Name: ')
+nameLabel = tk.Label(nameFrame, font=('Courier', 12), text='Username: ')
 nameLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 nameEntry = tk.Entry(nameFrame, font=('Courier', 12))
 nameEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
+myIPLabel = tk.Label(myIPFrame, font=('Courier', 12), text='Your IP: ')
+myIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
+
 myIPEntry = tk.Entry(myIPFrame, font=('Courier', 12))
-nameEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
+myIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
-# connectButton = tk.Button(connectButtonFrame, text="Connect", font=('Courier', 12), command=lambda: connect(myIPEntry.get(), "hi", "hi", "hi", "hi"))
-# connectButton.place(relx=0.7, relheight=1, relwidth=0.3)
+myPortLabel = tk.Label(myPortFrame, font=('Courier', 10), text='Your Host Port: ')
+myPortLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
-# executeButton = tk.Button(e, text="Execute", font=('Courier', 12), command=lambda: testMethod2(nameEntry.get()))
-# executeButton.place(relx=0.8, relheight=1, relwidth=0.3)
+myPortEntry = tk.Entry(myPortFrame, font=('Courier', 12))
+myPortEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
-# consoleDisplay = tk.Label(consoleFrame, font=('Courier', 12))
-# consoleDisplay.place(relwidth=1, relheight=1)
+serverIPLabel = tk.Label(serverIPFrame, font=('Courier', 10), text='Server IP: ')
+serverIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
+
+serverIPEntry = tk.Entry(serverIPFrame, font=('Courier', 12))
+serverIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
+
+serverPortLabel = tk.Label(serverPortFrame, font=('Courier', 10), text='Server Port: ')
+serverPortLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
+
+serverPortEntry = tk.Entry(serverPortFrame, font=('Courier', 12))
+serverPortEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
+
+connectButton = tk.Button(connectButtonFrame, text="Connect", font=('Courier', 12), command=lambda: connect(nameEntry.get(), myIPEntry.get(), myPortEntry.get(), serverIPEntry.get(), serverPortEntry.get()))
+connectButton.place(relx=0, relheight=1, relwidth=1)
+
+consoleDisplay = tk.Label(consoleFrame, font=('Courier', 12))
+consoleDisplay.place(relwidth=1, relheight=0.82)
+
+consoleEntry = tk.Entry(consoleFrame, font=('Courier', 12))
+consoleEntry.place(relx=0, rely=0.85, relheight=0.15, relwidth=0.65)
+
+executeButton = tk.Button(consoleFrame, text="Execute", font=('Courier', 12), command=lambda: executeCommand(consoleEntry.get()))
+executeButton.place(relx=0.7, rely=0.85, relheight=0.15, relwidth=0.3)
 
 root.mainloop()
