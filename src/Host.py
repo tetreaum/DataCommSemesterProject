@@ -112,4 +112,5 @@ consoleEntry.place(relx=0, rely=0.85, relheight=0.15, relwidth=0.65)
 executeButton = tk.Button(consoleFrame, text="Execute", font=('Courier', 12), command=lambda: executeCommand(consoleEntry.get()))
 executeButton.place(relx=0.7, rely=0.85, relheight=0.15, relwidth=0.3)
 
+# Frames are filled, now running the loop
 root.mainloop()
