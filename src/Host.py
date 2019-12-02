@@ -9,8 +9,9 @@ Run pip install pillow in the command line to access PIL
 import tkinter as tk
 import tkinter.font
 import socket
+import pickle
 import _thread as _thr
-from network import Network
+# from network import Network
 from PIL import Image
 from PIL import ImageTk
 
@@ -26,7 +27,7 @@ server = ""
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-def threaded_client(conn):
+def threadedClient(conn):
     conn.send(str.encode("Connected"))
     reply = ""
     while True:
@@ -56,19 +57,37 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
     while True:
         conn, addr = sock.accept()
         print("Connected to: ", addr)
-        _thr.start_new_thread(threaded_client, (conn, ))
+        _thr.start_new_thread(threadedClient, (conn, ))
 
 
 def connect(name, myIP, myPort, serverIP, serverPort):
     consoleDisplay['text'] = "username: " + name + "\nmyIP: " + myIP + "\nmyPort: " + myPort + "\nserverIP: " + serverIP + "\nserverPort: " + serverPort
+    # Connect to central server
+    s.bind((serverIP, int(serverPort)))
+    con, addr = s.accept()
     if myIP == "" and myPort == "":
         # TODO: connect to central server and ask it for hosts list, print it to screen
         print("In if")
+        # Convert inputs into dictionary
+        msg = {"name": name, "myIP": myIP, "myPort": myPort, "serverIP": serverIP, "serverPort": serverPort}
+        # Serialize the data so we can send it over a socket
+        serialData = pickle.dumps(msg)
+        s.send(serialData)
+        # Receive the list of hosts and display it
+        serialList = s.recv(4096)
+        listHosts = pickle.loads(serialList)
+        displayText = ""
+        for item in listHosts:
+            for keys, values in item.items():
+                displayText.append(keys + " : " + values + "\n")
+                print(keys + " : " + values + "\n")
+
     else:
         # TODO: connect to central server, tell it we're hosting
         print("I'm hosting, starting server")
         _thr.start_new_thread(threadServer, (s, name, myIP, myPort, serverIP, serverPort, ))
         # TODO: connect to our own server that is running now
+        # TODO: in host server thread report back when we have 4 connections
     print("DONE")
 
 
@@ -123,7 +142,7 @@ myIPLabel = tk.Label(myIPFrame, font=('Courier', 12), text='Your IP: ')
 myIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myIPEntry = tk.Entry(myIPFrame, font=('Courier', 12))
-myIPEntry.insert(0, "192.168.50.55")  # TODO: remove the default IP
+myIPEntry.insert(0, "35.40.26.200")  # TODO: remove the default IP
 myIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myPortLabel = tk.Label(myPortFrame, font=('Courier', 10), text='Your Host Port: ')

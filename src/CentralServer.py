@@ -1,5 +1,6 @@
 import socket
 import _thread as _th
+import pickle
 # import threading
 # import sys
 
@@ -9,8 +10,10 @@ def Main():
     listHosts = []
 
     # server and port variables
-    server = ""   # this should be ipv4 address of who's running the server
+    server = "35.40.26.200"   # this should be ipv4 address of who's running the server
     port = 12000
+
+    print("started server " + server + " on port " + str(port))
 
     # Create socket
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,13 +36,18 @@ def Main():
                 print("Disconnected")
                 break
             
-            # Add host to list of hosts
-            if data.get["isHost"] is True:
+            # Unpack serialized data
+            connectedUser = pickle.loads(data)
+
+            # If user is not host, send them a list of hosts
+            if connectedUser.get["myIP"] == "" and connectedUser.get["myPort"] == "":
+                serialListHosts = pickle.dumps(listHosts)
+                con.send(serialListHosts)
+            # if user is host, add them to list of hosts
+            else:
                 listHosts.add(data)
                 msg = "You are now hosting on port " + data.get["port"]
                 con.send(msg)
-            else:
-                con.send(listHosts)
 
             con.close()
 
