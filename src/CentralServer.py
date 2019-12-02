@@ -5,9 +5,8 @@ import _thread as _th
 
 
 def Main():
-    # Dictionary to hold connected players
-    # Entry format is "name:" [ip, hosting port]
-    connectedPlayers = {}
+    # list to hold host players
+    listHosts = []
 
     # server and port variables
     server = ""   # this should be ipv4 address of who's running the server
@@ -34,7 +33,13 @@ def Main():
                 print("Disconnected")
                 break
             
-            # This is where we will call game logic
+            # Add host to list of hosts
+            if data.get["isHost"] is True:
+                listHosts.add(data)
+                msg = "You are now hosting on port " + data.get["port"]
+                con.send(msg)
+            else:
+                con.send(listHosts)
 
             con.close()
 
