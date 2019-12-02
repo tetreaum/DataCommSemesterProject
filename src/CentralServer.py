@@ -22,12 +22,12 @@ def Main():
     try:
         soc.bind((server, port))
     except socket.error as err:
-        str(err)
+        print(str(err))
 
     # Listen for connections
     soc.listen(20)
 
-    def client_thread(con):
+    def clientThread(con):
         while True:
             # receiving data from client
             data = con.recv(2048)
@@ -40,7 +40,7 @@ def Main():
             connectedUser = pickle.loads(data)
 
             # If user is not host, send them a list of hosts
-            if connectedUser.get["myIP"] == "" and connectedUser.get["myPort"] == "":
+            if connectedUser["myIP"] == "" and connectedUser["myPort"] == "":
                 serialListHosts = pickle.dumps(listHosts)
                 con.send(serialListHosts)
             # if user is host, add them to list of hosts
@@ -58,7 +58,7 @@ def Main():
         con, addr = soc.accept()
   
         # Start a new thread and return its identifier
-        _th.start_new_thread(client_thread, (con,))
+        _th.start_new_thread(clientThread, (con,))
 
     soc.close()
 

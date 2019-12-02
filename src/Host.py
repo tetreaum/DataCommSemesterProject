@@ -63,8 +63,8 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
 def connect(name, myIP, myPort, serverIP, serverPort):
     consoleDisplay['text'] = "username: " + name + "\nmyIP: " + myIP + "\nmyPort: " + myPort + "\nserverIP: " + serverIP + "\nserverPort: " + serverPort
     # Connect to central server
-    s.bind((serverIP, int(serverPort)))
-    con, addr = s.accept()
+    s.connect((serverIP, int(serverPort)))
+    # con, addr = s.accept()
     if myIP == "" and myPort == "":
         # TODO: connect to central server and ask it for hosts list, print it to screen
         print("In if")
@@ -89,6 +89,7 @@ def connect(name, myIP, myPort, serverIP, serverPort):
         # TODO: connect to our own server that is running now
         # TODO: in host server thread report back when we have 4 connections
     print("DONE")
+    s.close()
 
 
 def executeCommand(consoleEntry):
@@ -156,12 +157,14 @@ serverIPLabel = tk.Label(serverIPFrame, font=('Courier', 10), text='Server IP: '
 serverIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverIPEntry = tk.Entry(serverIPFrame, font=('Courier', 12))
+serverIPEntry.insert(0, "35.40.26.200")  # TODO: remove the default IP
 serverIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverPortLabel = tk.Label(serverPortFrame, font=('Courier', 10), text='Server Port: ')
 serverPortLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverPortEntry = tk.Entry(serverPortFrame, font=('Courier', 12))
+serverPortEntry.insert(0, "12000")  # TODO: remove the default Port
 serverPortEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 connectButton = tk.Button(connectButtonFrame, text="Connect", font=('Courier', 12), command=lambda: connect(nameEntry.get(), myIPEntry.get(), myPortEntry.get(), serverIPEntry.get(), serverPortEntry.get()))
