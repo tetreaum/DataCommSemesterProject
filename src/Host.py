@@ -8,23 +8,67 @@ Run pip install pillow in the command line to access PIL
 """
 import tkinter as tk
 import tkinter.font
+import socket
+import _thread as _thr
+from network import Network
 from PIL import Image
 from PIL import ImageTk
 
 HEIGHT = 750
 WIDTH = 800
 
+name = ""
+myIP = ""
+myPort = ""
+serverIP = ""
+serverPort = ""
+server = ""
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-class Host():
-    name = ""
-    myIP = ""
-    myPort = ""
-    serverIP = ""
-    serverPort = ""
+
+def threaded_client(conn):
+    conn.send(str.encode("Connected"))
+    reply = ""
+    while True:
+        try:
+            data = conn.recv(2048)
+            reply = data.decode("utf-8")
+            if not data:
+                print("Disconnected")
+                break
+            else:
+                print("Received: ", reply)
+                print("Sending : ", reply)
+            conn.sendall(str.encode(reply))
+        except:
+            break
+    print("Lost connection")
+    conn.close
+
+
+def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
+    try:
+        sock.bind((myIP, int(myPort)))
+        print("socket bound")
+    except socket.error as e:
+        print(str(e))
+    sock.listen(4)
+    while True:
+        conn, addr = sock.accept()
+        print("Connected to: ", addr)
+        _thr.start_new_thread(threaded_client, (conn, ))
 
 
 def connect(name, myIP, myPort, serverIP, serverPort):
     consoleDisplay['text'] = "username: " + name + "\nmyIP: " + myIP + "\nmyPort: " + myPort + "\nserverIP: " + serverIP + "\nserverPort: " + serverPort
+    if myIP == "" and myPort == "":
+        # TODO: connect to central server and ask it for hosts list, print it to screen
+        print("In if")
+    else:
+        # TODO: connect to central server, tell it we're hosting
+        print("I'm hosting, starting server")
+        _thr.start_new_thread(threadServer, (s, name, myIP, myPort, serverIP, serverPort, ))
+        # TODO: connect to our own server that is running now
     print("DONE")
 
 
@@ -33,8 +77,7 @@ def executeCommand(consoleEntry):
     print("DONE2")
 
 
-ourHost = Host
-
+# ===========================GUI Code starts here===========================
 root = tk.Tk()
 
 canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH)
@@ -80,12 +123,14 @@ myIPLabel = tk.Label(myIPFrame, font=('Courier', 12), text='Your IP: ')
 myIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myIPEntry = tk.Entry(myIPFrame, font=('Courier', 12))
+myIPEntry.insert(0, "192.168.50.55")  # TODO: remove the default IP
 myIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myPortLabel = tk.Label(myPortFrame, font=('Courier', 10), text='Your Host Port: ')
 myPortLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myPortEntry = tk.Entry(myPortFrame, font=('Courier', 12))
+myPortEntry.insert(0, "5555")  # TODO: remove the default Port
 myPortEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverIPLabel = tk.Label(serverIPFrame, font=('Courier', 10), text='Server IP: ')
@@ -111,6 +156,7 @@ consoleEntry.place(relx=0, rely=0.85, relheight=0.15, relwidth=0.65)
 
 executeButton = tk.Button(consoleFrame, text="Execute", font=('Courier', 12), command=lambda: executeCommand(consoleEntry.get()))
 executeButton.place(relx=0.7, rely=0.85, relheight=0.15, relwidth=0.3)
+# ===========================GUI Code ends here===========================
 
 # Frames are filled, now running the loop
 root.mainloop()

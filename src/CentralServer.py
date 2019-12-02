@@ -22,7 +22,7 @@ def Main():
         str(err)
 
     # Listen for connections
-    soc.listen(4)
+    soc.listen(20)
 
     def client_thread(con):
         while True:
