@@ -1,7 +1,7 @@
 import socket
-import threading
-from _thread import *
-import sys
+import _thread as _th
+# import threading
+# import sys
 
 
 def Main():
@@ -13,7 +13,7 @@ def Main():
     server = ""   # this should be ipv4 address of who's running the server
     port = 12000
 
-    # Create socket 
+    # Create socket
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Bind port to server
@@ -24,17 +24,6 @@ def Main():
 
     # Listen for connections
     soc.listen(4)
-
-    # a while loop until client wants to exit 
-    while True: 
-  
-        # establish connection with client 
-        con, addr = soc.accept()
-  
-        # Start a new thread and return its identifier 
-        start_new_thread(client_thread, (con,))
-
-    soc.close()
 
     def client_thread(con):
         while True:
@@ -49,6 +38,17 @@ def Main():
 
             con.close()
 
+    # a while loop until client wants to exit
+    while True:
+  
+        # establish connection with client
+        con, addr = soc.accept()
+  
+        # Start a new thread and return its identifier
+        _th.start_new_thread(client_thread, (con,))
 
-if __name__ == '__main__': 
-    Main() 
+    soc.close()
+
+
+if __name__ == '__main__':
+    Main()
