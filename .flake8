@@ -6,5 +6,7 @@ exclude =
     docs/source/conf.py,
     old,
     build,
-    dist
+    dist,
+    gameLogic,
+    oldSRC
 max-complexity = 10
