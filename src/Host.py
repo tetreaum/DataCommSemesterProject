@@ -29,30 +29,20 @@ connections = []
 
 def threaded(conn, player, game):
     pass
-    # conn.send(str.encode(str(player)))
-
-    # reply = ""
-    # while True:
-    #     try:
-    #         data = conn.recv(4096).decode()
-    #         if not data:
-    #             print("Disconnected")
-    #             break
-    #         else:
-    #             if data != "1" and data != "2" and data != "3" and data != "4" and data != "5":
-    #                 conn.send(str.encode("Please input a valid command"))
-    #             else:
-    #                 if game.dealingPhase:
-    #                     game.deal()
-    #                 else:
-    #                     pass  # Tell players to ready up
-    #         conn.sendall(str.encode(reply))
-    #     except:
-    #         break
-    # print("Lost connection")
-    # conn.close
 
 
+# a helper method to send information easier
+def sendMessage(conn, game, message):
+    conn[game.turn].send(str.encode(message))
+
+
+# a helper message to recv information eaiser
+# conn.send(str.encode("GameState"))
+def recvMessage(conn, game):
+    return conn[game.turn].recv(4096).decode()
+
+
+# THe server's gameLoop and connection logic
 def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
     try:
         sock.bind((myIP, int(myPort)))
@@ -83,10 +73,9 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                     # If choosing trump let each player choose trump
                     elif game.choosingTrumpPhase1:
                         # Send to connections[game.turn] game state
-                        state = game.gameStateBuilder()
-                        connections[game.turn].send(state)
+                        sendMessage(connections, game, game.gameStateBuilder())
                         # Listen for options
-                        option = connections[game.turn].recv(4096).decode()
+                        option = recvMessage(connections, game)
                         # Report options to game
                         game.pickTrumpStage1(game.turn, option)
                         # If yes, connections[game.dealer] game state
@@ -96,21 +85,34 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                             state = game.gameStateBuilder()
                             connections[game.dealer].send(state)
                             # connections[game.dealer] options (needs to trade card)
-                            option = connections[game.turn].recv(4096).decode()
+                            option = recvMessage(connections, game)
                             game.discard(game.dealer, option)
                         # Else next person turn
                         else:
-                            game.turn = (game.turn + 1) % 4
+                            game.iterateTurn()
                             if game.turn == game.dealer:
                                 game.choosingTrumpPhase1 = False
                                 game.choosingTrumpPhase2 = True
-                                # TODO Hande choosingTrumpPhase2
-                        # If game turn >= 3, start giving options to people for picking any suite minus the one shown in kitty val
-                        if game.turn > 4:  # Currently wrong
-                            pass
+                                
+                    elif game.choosingTrumpPhase2:
+                        # Send options to player
+                        sendMessage(connections, game, game.gameStateBuilder())
+                        # Listen for options
+                        option = recvMessage(connections, game)
+                        # Reprt options to game
+                        if option != "4":
+                            game.pickTrumpStage2(game.turn, option)
+                        else:
+                            if game.turn == game.dealer:
+                                game.deal()
+                            else:
+                                game.iterateTurn()
                     # If playing cards have each player play a card
                     elif game.playingCardsPhase:
-                        pass
+                        sendMessage(connections, game, game.gameStateBuilder())
+                        option = recvMessage(connections, game)
+
+
 
                     # Check to see if the game is over after plays.
                     gameEnd = game.checkWinner

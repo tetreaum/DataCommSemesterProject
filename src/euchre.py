@@ -32,6 +32,7 @@ class Euchre:
         self.moves = {}  # A list of the moves that have been played
         self.players = {}  # A list of players and their hands
         self.dealer = -1  # The current dealer (set in deal)
+        self.leader = 0  # The player who will play first
         self.trump = 0  # The current trump suit
         self.team1Score = 0  # The current score for team one
         self.team2Score = 0  # The current score for team two
@@ -81,7 +82,7 @@ class Euchre:
                 tempSuits.append(suit)
         for suit in tempSuits:
             tempSuitsString = tempSuitsString + "\n" + str(counter) + ": " + self.getCardSuitText(suit)
-        return tempCardsInHand + "\nOptions: " + tempSuitsString
+        return tempCardsInHand + "\nOptions: " + tempSuitsString + "\n4: Pass"
 
     # A helper method to build tempCardsOnTable for gameStateBuilder
     def buildTempCardsOnTable(self):
@@ -131,6 +132,10 @@ class Euchre:
     # clears moves so that the play can not be messed up
     def newRound(self):
         self.moves.clear()
+        self.leader = (self.dealer + 1) % 4
+
+    def iterateTurn(self):
+        self.turn = (self.turn + 1) % 4
 
     # Allows the dealer to switch the card in their hand for the card on the kitty
     def discard(self, player, option):
@@ -222,11 +227,6 @@ class Euchre:
                 playerOne = playerOne + 500
             else:
                 playerOne = playerOne + 100
-        # elif self.getCard(player) == 3:
-        #     if self.getCardSuit(player) == (trump + 2 % 4):
-        #         player = player + 250
-        #     else:
-        #         pass
 
         if self.getCardSuit(playerTwo) == trump:
             if self.getCard(playerTwo) == 3:
