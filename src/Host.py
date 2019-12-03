@@ -76,23 +76,38 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
             reply = ""
             while True:
                 print("in the game loop")
-                # Playing Phase
                 try:
                     # If dealing do the dealing stuff
                     if game.dealingPhase:
                         game.deal()
                     # If choosing trump let each player choose trump
-                    elif game.choosingTrumpPhase:
+                    elif game.choosingTrumpPhase1:
                         # Send to connections[game.turn] game state
-                        # conn.send(connections[game.turn])
-                        # Send to connections[game.turn] options
+                        state = game.gameStateBuilder()
+                        connections[game.turn].send(state)
                         # Listen for options
+                        option = connections[game.turn].recv(4096).decode()
                         # Report options to game
+                        game.pickTrumpStage1(game.turn, option)
                         # If yes, connections[game.dealer] game state
-                        # connections[game.dealer] options (needs to trade card)
+                        if option == "1":
+                            game.choosingTrumpPhase1 = False
+                            game.discardPhase = True
+                            state = game.gameStateBuilder()
+                            connections[game.dealer].send(state)
+                            # connections[game.dealer] options (needs to trade card)
+                            option = connections[game.turn].recv(4096).decode()
+                            game.discard(game.dealer, option)
                         # Else next person turn
+                        else:
+                            game.turn = (game.turn + 1) % 4
+                            if game.turn == game.dealer:
+                                game.choosingTrumpPhase1 = False
+                                game.choosingTrumpPhase2 = True
+                                # TODO Hande choosingTrumpPhase2
                         # If game turn >= 3, start giving options to people for picking any suite minus the one shown in kitty val
-                        pass
+                        if game.turn > 4:  # Currently wrong
+                            pass
                     # If playing cards have each player play a card
                     elif game.playingCardsPhase:
                         pass

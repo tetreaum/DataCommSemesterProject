@@ -23,7 +23,9 @@ import random
 class Euchre:
     def __init__(self):
         self.dealingPhase = True
-        self.choosingTrumpPhase = False
+        self.choosingTrumpPhase1 = False
+        self.choosingTrumpPhase2 = False
+        self.discardPhase = False
         self.playingCardsPhase = False
         self.turn = 0  # Iterate in playCard, keeps track of whose playing
         self.ready = True  # When all players have redied up
@@ -34,55 +36,12 @@ class Euchre:
         self.team1Score = 0  # The current score for team one
         self.team2Score = 0  # The current score for team two
         self.cards = [10, 11, 12, 13, 20, 21, 22, 23, 30, 31, 32, 33, 40, 41, 42, 43, 50, 51, 52, 53, 60, 61, 62, 63]  # All the cards in the deck
+        self.suits = [0, 1, 2, 3]
         self.kitty = 0
-
-    # builds the current information of the game so the player can use that to think
-    def gameStateBuilder(self, playerNumber):
-        if self.dealingPhase:
-            return "This text should never appear (See gameStateBuilder in euchre)"
-        elif self.choosingTrumpPhase:
-            return \
-                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
-                "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
-                "\nOptions: " + "\n1: Yes\n2: No"
-        elif self.playingCardsPhase:
-            tempCardsOnTable = ""
-            tempCardsInHand = ""
-            counter = 1
-            for move in self.moves:
-                tempCardsOnTable = tempCardsOnTable + "Player " + self.moves[move] + " played the " + self.getCardText(self.move) + " of " + self.getCardSuitText(move) + "\n"
-            for card in self.players[playerNumber]:
-                tempCardsInHand = tempCardsInHand + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card) + "\n"
-                counter = counter + 1
-            return \
-                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
-                tempCardsOnTable + \
-                "\nOptions: " + \
-                tempCardsInHand
 
     # add a player to the dictionary with an empty list as their value (called when first connecting)
     def addPlayer(self, player):
         self.players[player] = []
-
-    # # checks if we have enough players to play
-    # def checkNumPlayers(self):
-    #     return len(self.players)
-
-    # returns the cards available in a players hand that they can play
-    def getPlayerHand(self, p):
-        return self.players[p]  # return the cards in that player's hand
-
-    # clears moves so that the play can not be messed up
-    def newRound(self):
-        self.moves.clear()
-
-    # a client tells the server what card they want to play
-    def playCard(self, player, move):
-        self.moves[player] = move  # the player will tell the HostServer what it wants to play
-
-    # I don't think we need this.
-    def connected(self):
-        return self.ready  # tells the server who is all connected
 
     # A class to handle dealing the cards to each person's "hand" in the dictionary
     # It shuffles the cards at the start and gives a copy of the cards to the player's hand.
@@ -100,16 +59,105 @@ class Euchre:
                 counter = counter + 1  # Move the place in the deck along one
         self.kitty = self.cards[20]
         self.dealingPhase = False
-        self.choosingTrumpPhase = True
+        self.choosingTrumpPhase1 = True
+
+    # builds the current information of the game so the player can use that to think
+    def gameStateBuilder(self, playerNumber):
+        if self.dealingPhase:
+            return "This text should never appear (See gameStateBuilder in euchre)"
+        elif self.choosingTrumpPhase1:
+            tempCardsInHand = ""
+            counter = 1
+            for card in self.players[playerNumber]:
+                tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card)
+                counter = counter + 1
+            return \
+                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
+                "\n hand: " + \
+                tempCardsInHand + \
+                "\nOptions: " + "\n1: Yes\n2: No"
+        elif self.choosingTrumpPhase2:
+            tempSuits = []
+            tempSuitsString = ""
+            counter = 1
+            for suit in self.suits:
+                if suit != self.kitty.getCardSuit:
+                    tempSuits.append(suit)
+            for suit in tempSuits:
+                tempSuitsString = tempSuitsString + "\n" + str(counter) + ": " + self.getCardSuitText(suit)
+            tempCardsInHand = ""
+            counter = 1
+            for card in self.players[playerNumber]:
+                tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card)
+                counter = counter + 1
+            return \
+                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                "\nOptions: " + \
+                tempCardsInHand
+        elif self.discardPhase:
+            tempCardsInHand = ""
+            counter = 1
+            for card in self.players[playerNumber]:
+                tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card)
+            return \
+                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
+                "\nOptions: " + \
+                tempCardsInHand
+        elif self.playingCardsPhase:
+            tempCardsOnTable = ""
+            tempCardsInHand = ""
+            counter = 1
+            for move in self.moves:
+                tempCardsOnTable = tempCardsOnTable + "Player " + self.moves[move] + " played the " + self.getCardText(self.move) + " of " + self.getCardSuitText(move)
+            for card in self.players[playerNumber]:
+                tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card) + "\n"
+                counter = counter + 1
+            return \
+                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                tempCardsOnTable + \
+                "\nOptions: " + \
+                tempCardsInHand
+
+    # returns the cards available in a players hand that they can play
+    def getPlayerHand(self, p):
+        return self.players[p]  # return the cards in that player's hand
+
+    # clears moves so that the play can not be messed up
+    def newRound(self):
+        self.moves.clear()
+
+    # Allows the dealer to switch the card in their hand for the card on the kitty
+    def discard(self, player, option):
+        self.players[player].remove(option - 1)
+        self.players[player].append(self.kitty)
+        self.discardPhase = False
+        self.playingCardsPhase = True
+
+    # a client tells the server what card they want to play
+    def playCard(self, player, move):
+        self.moves[player] = move  # the player will tell the HostServer what it wants to play
 
     # If the player says "yes" take trump, else, next move
-    def pickTrump(self, player, move):
-        if move == "yes":
-            pass  # Force dealer to switch card Also set self.trump
+    def pickTrumpStage1(self, player, move):
+        if move == "1":
+            trump = self.getCardSuit(self.kitty)
+            turn = (self.dealer + 1) % 4
+            self.choosingTrumpPhase1 = False
+            self.playingCardsPhase = True
         else:
             pass  # Next turn
-        turn = (self.dealer + 1) % 4
-        self.choosingTrumpPhase = False
+        
+    # The player will say a specific suit (from the options listed) and then trump will be picked and playingCardsPhase ensues
+    def pickTrumpStage2(self, player, option):
+        tempSuits = []
+        for suit in self.suits:
+            if suit != self.kitty.getCardSuit:
+                tempSuits.append(suit)
+        self.trump = tempSuits[option]
+        self.turn = (self.dealer + 1) % 4
+        self.choosingTrumpPhase2 = False
         self.playingCardsPhase = True
 
     # Helper methods to get the Card out of the 2 digit number
@@ -226,3 +274,11 @@ class Euchre:
                 return "Team Two!"
         else:
             return "No"
+
+    # # checks if we have enough players to play
+    # def checkNumPlayers(self):
+    #     return len(self.players)
+
+    # # I don't think we need this.
+    # def connected(self):
+    #     return self.ready  # tells the server who is all connected
