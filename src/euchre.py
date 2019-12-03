@@ -13,8 +13,8 @@ ACE = 6
 
 CLUBS = 0
 DIAMONDS = 1
-SPADES = 2
-HEARTS = 3
+HEARTS = 2
+SPADES = 3
 """
 
 
@@ -65,53 +65,50 @@ class Euchre:
     def getCardSuit(self, i):
         return (i % 10)
 
+    # Helper method to get if the card is a left bower
+    def suitComp(self, index):
+        if index == 0:
+            return 3
+        elif index == 1:
+            return 2
+        elif index == 2:
+            return 1
+        elif index == 3:
+            return 0
+
     # Compares cards from each hand, returns the number of the player who won the trick
-    # TODO: Make left bower work
     def scoreTrick(self, playerOne, playerTwo, playerThree, playerFour, trump):
+        # Checks for right bower or trump
         if self.getCardSuit(playerOne) == trump:
             if self.getCard(playerOne) == 3:
                 playerOne = playerOne + 500
             else:
                 playerOne = playerOne + 100
-        elif self.getCard(playerOne) == 3:
-            if self.getCardSuit(playerOne) == (trump + 2 % 4):
-                playerOne = playerOne + 250
-            else:
-                pass
-        
+        # elif self.getCard(player) == 3:
+        #     if self.getCardSuit(player) == (trump + 2 % 4):
+        #         player = player + 250
+        #     else:
+        #         pass
+
         if self.getCardSuit(playerTwo) == trump:
             if self.getCard(playerTwo) == 3:
                 playerTwo = playerTwo + 500
             else:
                 playerTwo = playerTwo + 100
-        elif self.getCard(playerTwo) == 3:
-            if self.getCardSuit(playerTwo) == (trump + 2 % 4):
-                playerTwo = playerTwo + 250
-            else:
-                pass
-        
+
         if self.getCardSuit(playerThree) == trump:
             if self.getCard(playerThree) == 3:
                 playerThree = playerThree + 500
             else:
                 playerThree = playerThree + 100
-        elif self.getCard(playerThree) == 3:
-            if self.getCardSuit(playerThree) == (trump + 2 % 4):
-                playerThree = playerThree + 250
-            else:
-                pass
 
         if self.getCardSuit(playerFour) == trump:
             if self.getCard(playerFour) == 3:
                 playerFour = playerFour + 500
             else:
                 playerFour = playerFour + 100
-        elif self.getCard(playerFour) == 3:
-            if self.getCardSuit(playerFour) == (trump + 2 % 4):
-                playerFour = playerFour + 250
-            else:
-                pass
 
+        # Check for left bower
         if self.getCard(playerOne) == 3 and self.getCardSuit(playerOne) == self.suitComp(trump):
             playerOne = playerOne + 250
 
