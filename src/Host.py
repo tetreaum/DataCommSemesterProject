@@ -15,7 +15,7 @@ import tkinter.font
 import socket
 import pickle
 import _thread as _thr
-# from network import Network
+import sys
 from PIL import Image
 from PIL import ImageTk
 from euchre import Euchre
@@ -27,8 +27,9 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 connections = []
 
 
-def threaded(conn, player, game):
-    pass
+def threaded(conn, consoleEntryRef):
+    # Update the game state
+    consoleDisplay['text'] = conn.recv(4096).decode()
 
 
 # a helper method to send information easier
@@ -55,8 +56,9 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
     connected = set()
     game = Euchre()
     player = 0
-    while True:
+    while True:  # Accept connections
         conn, addr = sock.accept()
+        game.addPlayer(player)
         player = player + 1
         connections.append(conn)
         print("Connected to: ", addr)
@@ -64,16 +66,20 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
             # conn.send((str(player)).encode())
 
             reply = ""
-            while True:
+            while True:  # GameLoop
                 print("in the game loop")
                 try:
                     # If dealing do the dealing stuff
                     if game.dealingPhase:
+                        print("Dealing")
                         game.deal()
+                        print("dealt")
+                        print(game.cards)
                     # If choosing trump let each player choose trump
                     elif game.choosingTrumpPhase1:
+                        print("Game.choosingTrumpPhase1")
                         # Send to connections[game.turn] game state
-                        sendMessage(connections, game, game.gameStateBuilder())
+                        sendMessage(connections, game, game.gameStateBuilder(game.turn))
                         # Listen for options
                         option = recvMessage(connections, game)
                         # Report options to game
@@ -82,7 +88,7 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                         if option == "1":
                             game.choosingTrumpPhase1 = False
                             game.discardPhase = True
-                            state = game.gameStateBuilder()
+                            state = game.gameStateBuilder(game.turn)
                             connections[game.dealer].send(state)
                             # connections[game.dealer] options (needs to trade card)
                             option = recvMessage(connections, game)
@@ -93,10 +99,9 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                             if game.turn == game.dealer:
                                 game.choosingTrumpPhase1 = False
                                 game.choosingTrumpPhase2 = True
-                                
                     elif game.choosingTrumpPhase2:
                         # Send options to player
-                        sendMessage(connections, game, game.gameStateBuilder())
+                        sendMessage(connections, game, game.gameStateBuilder(game.turn))
                         # Listen for options
                         option = recvMessage(connections, game)
                         # Reprt options to game
@@ -112,7 +117,7 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                         if len(game.moves) == 0:
                             game.newRound()
                             # Send options to player
-                            sendMessage(connections, game, game.gameStateBuilder())
+                            sendMessage(connections, game, game.gameStateBuilder(game.turn))
                             # Listen for options
                             option = recvMessage(connections, game)
                             game.playCard(game.turn, option)
@@ -121,31 +126,30 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                                 game.scoreTrick(game.moves[game.moves[0]], game.moves[game.moves[1]], game.moves[game.moves[2]], game.moves[game.moves[3]])  # TODO: need to fix order of args given for players
                             else:
                                 # Send options to player
-                                sendMessage(connections, game, game.gameStateBuilder())
+                                sendMessage(connections, game, game.gameStateBuilder(game.turn))
                                 # Listen for options
                                 option = recvMessage(connections, game)
                                 game.playCard(game.turn, option)
-                        sendMessage(connections, game, game.gameStateBuilder())
+                        sendMessage(connections, game, game.gameStateBuilder(game.turn))
                         option = recvMessage(connections, game)
-
                     # Check to see if the game is over after plays.
-                    game.checkWinner
-                    if game.gameEnd:
-                        pass
+                    game.checkWinner()
                 except:
+                    e = sys.exc_info()[0]
+                    print(e)
                     break
                 # Reporting Phase:
                 try:
+                    playerCursor = 0
                     for conn in connections:
-                        conn.send(str.encode("GameState"))
+                        conn.send(str.encode(game.gameStateBuilder(playerCursor)))
+                        playerCursor += 1
                 except:
                     print("RIPPPPPPPP")
                 player = player + 1
-            print("Lost connection")
-            conn.close
         else:
-            pass
-        # _thr.start_new_thread(threaded, (conn, player, game, ))
+            print("Lost connection")
+            conn.close()
 
 
 def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
@@ -154,7 +158,6 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
     if myIP == "" and myPort == "":
         # Connect to server
         s.connect((serverIP, int(serverPort)))
-        # TODO: connect to central server and ask it for hosts list, print it to screen
         # Convert inputs into dictionary
         if consoleInput == "":  # Central Server Specific stuff here
             msg = {"name": name, "myIP": myIP, "myPort": myPort, "serverIP": serverIP, "serverPort": serverPort}
@@ -172,8 +175,9 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
                     consoleDisplay['text'] = displayText
         else:  # Game specific logic here
             # TODO Create thread to handle server output and listen for new output every 1 second or something like that
-            msg = s.recv(4096).decode()
-            print(msg)
+            _thr.start_new_thread(threaded, (s, consoleEntry.get(), ))
+            # msg = s.recv(4096).decode()
+            # print(msg)
 
     else:
         # # TODO: connect to central server, tell it we're hosting
@@ -188,6 +192,7 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
 
 def executeCommand(consoleEntry):
     consoleDisplay['text'] = consoleEntry
+    # sendMessage(connections, game, consoleEntry)
     print("DONE2")
 
 
@@ -237,7 +242,7 @@ myIPLabel = tk.Label(myIPFrame, font=('Courier', 12), text='Your IP: ')
 myIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myIPEntry = tk.Entry(myIPFrame, font=('Courier', 12))
-myIPEntry.insert(0, "35.40.25.15")  # TODO: remove the default IP
+myIPEntry.insert(0, "localhost")  # TODO: remove the default IP
 myIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myPortLabel = tk.Label(myPortFrame, font=('Courier', 10), text='Your Host Port: ')
@@ -251,7 +256,7 @@ serverIPLabel = tk.Label(serverIPFrame, font=('Courier', 10), text='Server IP: '
 serverIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverIPEntry = tk.Entry(serverIPFrame, font=('Courier', 12))
-serverIPEntry.insert(0, "35.40.25.15")  # TODO: remove the default IP
+serverIPEntry.insert(0, "localhost")  # TODO: remove the default IP
 serverIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverPortLabel = tk.Label(serverPortFrame, font=('Courier', 10), text='Server Port: ')

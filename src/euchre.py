@@ -42,6 +42,10 @@ class Euchre:
         self.suits = [0, 1, 2, 3]
         self.kitty = 0
 
+    # add a player to the dictionary with an empty list as their value (called when first connecting)
+    def addPlayer(self, player):
+        self.players[player] = []
+
     # A class to handle dealing the cards to each person's "hand" in the dictionary
     # It shuffles the cards at the start and gives a copy of the cards to the player's hand.
     # The last 4 cards are the kitty
@@ -52,9 +56,9 @@ class Euchre:
         random.shuffle(self.cards)
         counter = 0  # The place in the deck
         for hand in self.players:  # For each player
-            hand.clear()  # removes the last hand
-            for i in range(0, 4):  # Adds 5 cards
-                hand.append(self.cards[counter])  # Add a card to their hand
+            self.players[hand].clear()  # removes the last hand
+            for i in range(0, 5):  # Adds 5 cards
+                self.players[hand].append(self.cards[counter])  # Add a card to their hand
                 counter = counter + 1  # Move the place in the deck along one
         self.kitty = self.cards[20]
         self.dealingPhase = False
@@ -95,6 +99,7 @@ class Euchre:
             return "This text should never appear (See gameStateBuilder in euchre)"
         # Call buildTempCardsInHand to show player what their hand is when choosing trump in phase 1. Gives them a yes or no option
         elif self.choosingTrumpPhase1:
+            tempCardsInHand = ""
             tempCardsInHand = self.buildTempCardsInHand(self, playerNumber)
             return \
                 "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
@@ -277,9 +282,9 @@ class Euchre:
             return "This means it's broken"
 
     # Checks to see if either team has won, will be played between tricks. If no one has won, return "No"
-    def checkWinner(self, team1Score, team2Score):
-        if (team1Score > 9) or (team2Score > 9):
-            if team1Score > 9:
+    def checkWinner(self):
+        if (self.team1Score > 9) or (self.team2Score > 9):
+            if self.team1Score > 9:
                 self.gameEnd = True
                 self.winner = 1
             else:
@@ -299,7 +304,3 @@ class Euchre:
     # # returns the cards available in a players hand that they can play
     # def getPlayerHand(self, p):
     #     return self.players[p]  # return the cards in that player's hand
-
-    # # add a player to the dictionary with an empty list as their value (called when first connecting)
-    # def addPlayer(self, player):
-    #     self.players[player] = []

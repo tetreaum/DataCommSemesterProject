@@ -13,7 +13,7 @@ def Main():
     listHosts = [{"test": "test"}]
 
     # server and port variables
-    server = "35.40.26.200"   # this should be ipv4 address of who's running the server
+    server = "localhost"   # this should be ipv4 address of who's running the server
     port = 12000
 
     print("started server " + server + " on port " + str(port))
