@@ -5,6 +5,10 @@ HostServerThread will then create HostServerWorkerThreads as it receives connect
 After Host has created its own HostServer it will then connect to itself through a socket so all
 players can be handled the same way.
 Run pip install pillow in the command line to access PIL
+
+This is modeled loosely after both the client and the server in the tutorial here but we did a lot
+of the code in here custom ouselves
+https://techwithtim.net/tutorials/python-online-game-tutorial/online-rock-paper-scissors-p1/
 """
 import tkinter as tk
 import tkinter.font
@@ -14,6 +18,7 @@ import _thread as _thr
 # from network import Network
 from PIL import Image
 from PIL import ImageTk
+from euchre import Euchre
 
 HEIGHT = 750
 WIDTH = 800

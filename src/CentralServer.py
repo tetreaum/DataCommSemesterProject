@@ -1,3 +1,6 @@
+"""
+A class to be a place for people to find games. We will only use it if we get time.
+"""
 import socket
 import _thread as _th
 import pickle

@@ -4,6 +4,7 @@ has their game logic for rock paper scissors. However, our game is much more com
 we wrote all of the game logic ourselves.
 https://techwithtim.net/tutorials/python-online-game-tutorial/online-rock-paper-scissors-p1/
 For cards, the first digit is the card value, and the second digit is the suit
+
 NINE = 1
 TEN = 2
 JACK = 3
@@ -71,7 +72,7 @@ class Euchre:
     def pickTrump(self, player, move):
         if move == "yes":
             pass  # Force dealer to switch card Also set self.trump
-        else: 
+        else:
             pass  # Next turn
 
     # Helper methods to get the Card out of the 2 digit number
