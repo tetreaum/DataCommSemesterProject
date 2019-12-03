@@ -16,19 +16,21 @@ DIAMONDS = 1
 HEARTS = 2
 SPADES = 3
 """
+import random
 
 
 class Euchre:
     def __init__(self, id):
-        self.turn = 0
-        self.ready = False
-        self.id = id
-        self.moves = []
-        self.players = {}
-        self.trump = ""
-        self.team1Score = 0
-        self.team2Score = 0
-        self.cards = [10, 11, 12, 13, 20, 21, 22, 23, 30, 31, 32, 33, 40, 41, 42, 43, 50, 51, 52, 53, 60, 61, 62, 63]
+        self.turn = 0  # Iterate in playCard, keeps track of whose playing
+        self.ready = False  # When all players have redied up
+        self.id = id  # DeleteMeLater
+        self.moves = []  # A list for legal moves for the player
+        self.players = {}  # A list of players and their hands
+        self.dealer = -1  # The current dealer (set in deal)
+        self.trump = 0  # The current trump suit
+        self.team1Score = 0  # The current score for team one
+        self.team2Score = 0  # The current score for team two
+        self.cards = [10, 11, 12, 13, 20, 21, 22, 23, 30, 31, 32, 33, 40, 41, 42, 43, 50, 51, 52, 53, 60, 61, 62, 63]  # All the cards in the deck
 
     # add a player to the dictionary with an empty list as their value (called when first connecting)
     def addPlayer(self, player):
@@ -46,16 +48,31 @@ class Euchre:
     def playCard(self, player, move):
         self.moves[player] = move  # the player will tell the HostServer what it wants to play
 
-    # I don't think we need this. 
+    # I don't think we need this.
     def connected(self):
         return self.ready  # tells the server who is all connected
 
     # A class to handle dealing the cards to each person's "hand" in the dictionary
+    # It shuffles the cards at the start and gives a copy of the cards to the player's hand.
+    # The last 4 cards are the kitty
+    # The list will still be full after the players have their cards
     def deal(self):
-        pass  # Deals the cards for the 'dealer' leaving the kitty up
+        self.dealer = (self.dealer + 1) % 4
+        self.turn = self.dealer
+        random.shuffle(self.cards)
+        counter = 0  # The place in the deck
+        for hand in self.players:  # For each player
+            hand.clear()  # removes the last hand
+            for i in range(0, 4):  # Adds 5 cards
+                hand.append(self.cards[counter])  # Add a card to their hand
+                counter = counter + 1  # Move the place in the deck along one
 
+    # If the player says "yes" take trump, else, next move
     def pickTrump(self, player, move):
-        pass  # Play move will be yes or no
+        if move == "yes":
+            pass  # Force dealer to switch card Also set self.trump
+        else: 
+            pass  # Next turn
 
     # Helper methods to get the Card out of the 2 digit number
     def getCard(self, i):
