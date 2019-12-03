@@ -79,8 +79,9 @@ def connect(name, myIP, myPort, serverIP, serverPort):
         displayText = ""
         for item in listHosts:
             for keys, values in item.items():
-                displayText.append(keys + " : " + values + "\n")
+                displayText += (keys + " : " + values + "\n")
                 print(keys + " : " + values + "\n")
+                consoleDisplay['text'] = displayText
 
     else:
         # TODO: connect to central server, tell it we're hosting

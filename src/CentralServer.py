@@ -7,7 +7,7 @@ import pickle
 
 def Main():
     # list to hold host players
-    listHosts = []
+    listHosts = [{"test": "test"}]
 
     # server and port variables
     server = "35.40.26.200"   # this should be ipv4 address of who's running the server
@@ -49,7 +49,7 @@ def Main():
                 msg = "You are now hosting on port " + data.get["port"]
                 con.send(msg)
 
-            con.close()
+        con.close()
 
     # a while loop until client wants to exit
     while True:
