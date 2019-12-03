@@ -48,9 +48,9 @@ def Main():
                 con.send(serialListHosts)
             # if user is host, add them to list of hosts
             else:
-                listHosts.add(data)
-                msg = "You are now hosting on port " + data.get["port"]
-                con.send(msg)
+                listHosts.add(connectedUser)
+                serialListHosts = pickle.dumps(listHosts)
+                con.send(serialListHosts)
 
         con.close()
 

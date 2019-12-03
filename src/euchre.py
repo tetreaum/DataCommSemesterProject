@@ -22,9 +22,11 @@ import random
 
 class Euchre:
     def __init__(self, id):
+        self.dealingPhase = True
+        self.choosingTrumpPhase = False
+        self.playingCardsPhase = False
         self.turn = 0  # Iterate in playCard, keeps track of whose playing
-        self.ready = False  # When all players have redied up
-        self.id = id  # DeleteMeLater
+        self.ready = True  # When all players have redied up
         self.moves = []  # A list for legal moves for the player
         self.players = {}  # A list of players and their hands
         self.dealer = -1  # The current dealer (set in deal)
@@ -32,6 +34,7 @@ class Euchre:
         self.team1Score = 0  # The current score for team one
         self.team2Score = 0  # The current score for team two
         self.cards = [10, 11, 12, 13, 20, 21, 22, 23, 30, 31, 32, 33, 40, 41, 42, 43, 50, 51, 52, 53, 60, 61, 62, 63]  # All the cards in the deck
+        self.kitty = 0
 
     # add a player to the dictionary with an empty list as their value (called when first connecting)
     def addPlayer(self, player):
@@ -67,6 +70,9 @@ class Euchre:
             for i in range(0, 4):  # Adds 5 cards
                 hand.append(self.cards[counter])  # Add a card to their hand
                 counter = counter + 1  # Move the place in the deck along one
+        self.kitty = self.cards[20]
+        self.dealingPhase = False
+        self.choosingTrumpPhase = True
 
     # If the player says "yes" take trump, else, next move
     def pickTrump(self, player, move):
@@ -74,6 +80,9 @@ class Euchre:
             pass  # Force dealer to switch card Also set self.trump
         else:
             pass  # Next turn
+        turn = (self.dealer + 1) % 4
+        self.choosingTrumpPhase = False
+        self.playingCardsPhase = True
 
     # Helper methods to get the Card out of the 2 digit number
     def getCard(self, i):
