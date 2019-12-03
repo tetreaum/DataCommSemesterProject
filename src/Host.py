@@ -109,21 +109,29 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                                 game.iterateTurn()
                     # If playing cards have each player play a card
                     elif game.playingCardsPhase:
+                        if len(game.moves) == 0:
+                            game.newRound()
+                            # Send options to player
+                            sendMessage(connections, game, game.gameStateBuilder())
+                            # Listen for options
+                            option = recvMessage(connections, game)
+                            game.playCard(game.turn, option)
+                        else:
+                            if game.leader == game.turn:
+                                game.scoreTrick(game.moves[game.moves[0]], game.moves[game.moves[1]], game.moves[game.moves[2]], game.moves[game.moves[3]])  # TODO: need to fix order of args given for players
+                            else:
+                                # Send options to player
+                                sendMessage(connections, game, game.gameStateBuilder())
+                                # Listen for options
+                                option = recvMessage(connections, game)
+                                game.playCard(game.turn, option)
                         sendMessage(connections, game, game.gameStateBuilder())
                         option = recvMessage(connections, game)
 
-
-
                     # Check to see if the game is over after plays.
-                    gameEnd = game.checkWinner
-                    if gameEnd == "Team One!":
+                    game.checkWinner
+                    if game.gameEnd:
                         pass
-                    elif gameEnd == "Team Two!":
-                        pass
-                    else:
-                        pass
-                    # connections[player].send("Your Options: ".encode("ascii"))
-                    # option = connections[player].recv(4096).decode()
                 except:
                     break
                 # Reporting Phase:
@@ -163,6 +171,7 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
                     print(keys + " : " + values + "\n")
                     consoleDisplay['text'] = displayText
         else:  # Game specific logic here
+            # TODO Create thread to handle server output and listen for new output every 1 second or something like that
             msg = s.recv(4096).decode()
             print(msg)
 
