@@ -69,7 +69,7 @@ class Euchre:
         counter = 1
         tempCardsInHand = ""
         for card in self.players[playerNum]:
-            tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card)
+            tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(card) + " of " + self.getCardSuitText(card)
             counter = counter + 1
         return tempCardsInHand
 
@@ -100,9 +100,9 @@ class Euchre:
         # Call buildTempCardsInHand to show player what their hand is when choosing trump in phase 1. Gives them a yes or no option
         elif self.choosingTrumpPhase1:
             tempCardsInHand = ""
-            tempCardsInHand = self.buildTempCardsInHand(self, playerNumber)
+            tempCardsInHand = self.buildTempCardsInHand(playerNumber)
             return \
-                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
                 "\n hand: " + \
                 tempCardsInHand + \
@@ -209,7 +209,7 @@ class Euchre:
 
     # Helper method to get card suit
     def getCardSuitText(self, i):
-        suitNum = int(i / 10)
+        suitNum = int(i % 10)
         if suitNum == 0:
             return "Clubs"
         elif suitNum == 1:

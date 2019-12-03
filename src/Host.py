@@ -145,7 +145,9 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                         conn.send(str.encode(game.gameStateBuilder(playerCursor)))
                         playerCursor += 1
                 except:
-                    print("RIPPPPPPPP")
+                    e = sys.exc_info()[0]
+                    print(e)
+                    break
                 player = player + 1
         else:
             print("Lost connection")
