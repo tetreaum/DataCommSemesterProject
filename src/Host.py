@@ -59,7 +59,8 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
         print("socket bound")
     except socket.error as e:
         print(str(e))
-    sock.listen(4)
+    print(type(sock))
+    sock.listen()
     print("waiting or players, server started")
     connected = set()
     game = Euchre()
@@ -69,11 +70,12 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
         player = player + 1
         connections.append(conn)
         print("Connected to: ", addr)
-        if player >= 3:
-            conn.send((str(player)).encode())
+        if player >= 1:  # TODO: set to 4
+            # conn.send((str(player)).encode())
 
             reply = ""
             while True:
+                print("in the game loop")
                 # Playing Phase
                 try:
                     # If dealing do the dealing stuff
@@ -110,7 +112,7 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                 # Reporting Phase:
                 try:
                     for conn in connections:
-                        conn.send(str.encode("GameState: "))
+                        conn.send(str.encode("GameState"))
                 except:
                     print("RIPPPPPPPP")
                 player = player + 1
@@ -128,7 +130,6 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
         # Connect to server
         s.connect((serverIP, int(serverPort)))
         # TODO: connect to central server and ask it for hosts list, print it to screen
-        print("In if")
         # Convert inputs into dictionary
         if consoleInput == "":  # Central Server Specific stuff here
             msg = {"name": name, "myIP": myIP, "myPort": myPort, "serverIP": serverIP, "serverPort": serverPort}
@@ -145,7 +146,8 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
                     print(keys + " : " + values + "\n")
                     consoleDisplay['text'] = displayText
         else:  # Game specific logic here
-            pass
+            msg = s.recv(4096).decode()
+            print(msg)
 
     else:
         # # TODO: connect to central server, tell it we're hosting
@@ -156,9 +158,6 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
         _thr.start_new_thread(threadServer, (s, name, myIP, myPort, serverIP, serverPort, ))
         # TODO: connect to our own server that is running now
         # TODO: in host server thread report back when we have 4 connections
-
-    print("DONE")
-    s.close()
 
 
 def executeCommand(consoleEntry):

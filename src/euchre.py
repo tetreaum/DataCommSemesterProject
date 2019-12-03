@@ -21,13 +21,13 @@ import random
 
 
 class Euchre:
-    def __init__(self, id):
+    def __init__(self):
         self.dealingPhase = True
         self.choosingTrumpPhase = False
         self.playingCardsPhase = False
         self.turn = 0  # Iterate in playCard, keeps track of whose playing
         self.ready = True  # When all players have redied up
-        self.moves = []  # A list for legal moves for the player
+        self.moves = {}  # A list of the moves that have been played
         self.players = {}  # A list of players and their hands
         self.dealer = -1  # The current dealer (set in deal)
         self.trump = 0  # The current trump suit
@@ -36,17 +36,45 @@ class Euchre:
         self.cards = [10, 11, 12, 13, 20, 21, 22, 23, 30, 31, 32, 33, 40, 41, 42, 43, 50, 51, 52, 53, 60, 61, 62, 63]  # All the cards in the deck
         self.kitty = 0
 
+    # builds the current information of the game so the player can use that to think
+    def gameStateBuilder(self, playerNumber):
+        if self.dealingPhase:
+            return "This text should never appear (See gameStateBuilder in euchre)"
+        elif self.choosingTrumpPhase:
+            return \
+                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
+                "\nOptions: " + "\n1: Yes\n2: No"
+        elif self.playingCardsPhase:
+            tempCardsOnTable = ""
+            tempCardsInHand = ""
+            counter = 1
+            for move in self.moves:
+                tempCardsOnTable = tempCardsOnTable + "Player " + self.moves[move] + " played the " + self.getCardText(self.move) + " of " + self.getCardSuitText(move) + "\n"
+            for card in self.players[playerNumber]:
+                tempCardsInHand = tempCardsInHand + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card) + "\n"
+                counter = counter + 1
+            return \
+                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                tempCardsOnTable + \
+                "\nOptions: " + \
+                tempCardsInHand
+
     # add a player to the dictionary with an empty list as their value (called when first connecting)
     def addPlayer(self, player):
         self.players[player] = []
 
-    # checks if we have enough players to play
-    def checkNumPlayers(self):
-        return len(self.players)
+    # # checks if we have enough players to play
+    # def checkNumPlayers(self):
+    #     return len(self.players)
 
     # returns the cards available in a players hand that they can play
-    def getPlayerMove(self, p):
-        return self.moves[p]  # return the cards in that player's hand
+    def getPlayerHand(self, p):
+        return self.players[p]  # return the cards in that player's hand
+
+    # clears moves so that the play can not be messed up
+    def newRound(self):
+        self.moves.clear()
 
     # a client tells the server what card they want to play
     def playCard(self, player, move):
@@ -91,6 +119,36 @@ class Euchre:
     # Helper method to get card suit
     def getCardSuit(self, i):
         return (i % 10)
+
+    # Helper methods to get the Card out of the 2 digit number
+    def getCardText(self, i):
+        cardNum = int(i / 10)
+        if cardNum == 1:
+            return "9"
+        elif cardNum == 2:
+            return "10"
+        elif cardNum == 3:
+            return "Jack"
+        elif cardNum == 4:
+            return "Queen"
+        elif cardNum == 5:
+            return "King"
+        elif cardNum == 6:
+            return "Ace"
+        return "This text should never appear (See getCardText)"
+
+    # Helper method to get card suit
+    def getCardSuitText(self, i):
+        suitNum = int(i / 10)
+        if suitNum == 0:
+            return "Clubs"
+        elif suitNum == 1:
+            return "Diamonds"
+        elif suitNum == 2:
+            return "Hearts"
+        elif suitNum == 3:
+            return "Spades"
+        return "This text should never appear (See getCardText)"
 
     # Helper method to get if the card is a left bower
     def suitComp(self, index):
