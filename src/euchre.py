@@ -61,68 +61,72 @@ class Euchre:
         self.dealingPhase = False
         self.choosingTrumpPhase1 = True
 
+    # A helper method to build tempCardsInHand for gameStateBuilder
+    def buildTempCardsInHand(self, playerNum):
+        counter = 1
+        tempCardsInHand = ""
+        for card in self.players[playerNum]:
+            tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card)
+            counter = counter + 1
+        return tempCardsInHand
+
+    # A helper method to build tempCardsInHand for gameStateBuilder
+    def buildCardsInHandAndSuitOptions(self, playerNum):
+        tempCardsInHand = self.buildTempCardsInHand(self, playerNum)
+        tempSuits = []
+        tempSuitsString = ""
+        counter = 1
+        for suit in self.suits:
+            if suit != self.kitty.getCardSuit:
+                tempSuits.append(suit)
+        for suit in tempSuits:
+            tempSuitsString = tempSuitsString + "\n" + str(counter) + ": " + self.getCardSuitText(suit)
+        return tempCardsInHand + "\nOptions: " + tempSuitsString
+
+    # A helper method to build tempCardsOnTable for gameStateBuilder
+    def buildTempCardsOnTable(self):
+        tempCardsOnTable = ""
+        for move in self.moves:
+            tempCardsOnTable = tempCardsOnTable + "Player " + self.moves[move] + " played the " + self.getCardText(self.move) + " of " + self.getCardSuitText(move)
+        return tempCardsOnTable
+
     # builds the current information of the game so the player can use that to think
     def gameStateBuilder(self, playerNumber):
-        if self.dealingPhase:
+        if self.dealingPhase:  # Should never send anything
             return "This text should never appear (See gameStateBuilder in euchre)"
+        # Call buildTempCardsInHand to show player what their hand is when choosing trump in phase 1. Gives them a yes or no option
         elif self.choosingTrumpPhase1:
-            tempCardsInHand = ""
-            counter = 1
-            for card in self.players[playerNumber]:
-                tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card)
-                counter = counter + 1
+            tempCardsInHand = self.buildTempCardsInHand(self, playerNumber)
             return \
                 "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
                 "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
                 "\n hand: " + \
                 tempCardsInHand + \
                 "\nOptions: " + "\n1: Yes\n2: No"
+        # Call buildCardsInHandAndSuitOptions to show player what their hand is when choosing trump in phase 2. Gives them a yes or no option
         elif self.choosingTrumpPhase2:
-            tempSuits = []
-            tempSuitsString = ""
-            counter = 1
-            for suit in self.suits:
-                if suit != self.kitty.getCardSuit:
-                    tempSuits.append(suit)
-            for suit in tempSuits:
-                tempSuitsString = tempSuitsString + "\n" + str(counter) + ": " + self.getCardSuitText(suit)
-            tempCardsInHand = ""
-            counter = 1
-            for card in self.players[playerNumber]:
-                tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card)
-                counter = counter + 1
+            cardsInHandAndSuitOptions = self.buildCardsInHandAndSuitOptions(self, playerNumber)
             return \
                 "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
                 "\nOptions: " + \
-                tempCardsInHand
+                cardsInHandAndSuitOptions
+        # Calls buildTempCardsInHand and then sends it back to the player with options for which card to remove
         elif self.discardPhase:
-            tempCardsInHand = ""
-            counter = 1
-            for card in self.players[playerNumber]:
-                tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card)
+            tempCardsInHand = self.buildTempCardsInHand(self, playerNumber)
             return \
                 "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
                 "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
                 "\nOptions: " + \
                 tempCardsInHand
+        # Calls buildTempCardsInHand and also buildTempCardsOnTable and gives the player their options for what cards to play
         elif self.playingCardsPhase:
-            tempCardsOnTable = ""
-            tempCardsInHand = ""
-            counter = 1
-            for move in self.moves:
-                tempCardsOnTable = tempCardsOnTable + "Player " + self.moves[move] + " played the " + self.getCardText(self.move) + " of " + self.getCardSuitText(move)
-            for card in self.players[playerNumber]:
-                tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(self.card) + " of " + self.getCardSuitText(card) + "\n"
-                counter = counter + 1
+            tempCardsOnTable = self.buildTempCardsOnTable(self)
+            tempCardsInHand = self.buildTempCardsInHand(self, playerNumber)
             return \
                 "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
                 tempCardsOnTable + \
                 "\nOptions: " + \
                 tempCardsInHand
-
-    # returns the cards available in a players hand that they can play
-    def getPlayerHand(self, p):
-        return self.players[p]  # return the cards in that player's hand
 
     # clears moves so that the play can not be messed up
     def newRound(self):
@@ -196,7 +200,8 @@ class Euchre:
             return "Hearts"
         elif suitNum == 3:
             return "Spades"
-        return "This text should never appear (See getCardText)"
+        else:
+            return "This text should never appear (See getCardText)"
 
     # Helper method to get if the card is a left bower
     def suitComp(self, index):
@@ -282,3 +287,7 @@ class Euchre:
     # # I don't think we need this.
     # def connected(self):
     #     return self.ready  # tells the server who is all connected
+
+    # # returns the cards available in a players hand that they can play
+    # def getPlayerHand(self, p):
+    #     return self.players[p]  # return the cards in that player's hand
