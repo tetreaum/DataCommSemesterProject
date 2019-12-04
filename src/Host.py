@@ -63,96 +63,42 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
         player = player + 1
         connections.append(conn)
         print("Connected to: ", addr)
+        conn.send(("You are player " + str(player)).encode())
         if player >= 1:  # TODO: set to 4
-            # conn.send((str(player)).encode())
-
-            reply = ""
             while True:  # GameLoop
-                print("in the game loop")
-                try:
-                    # If dealing do the dealing stuff
-                    if game.dealingPhase:
-                        print("Dealing")
-                        game.deal()
-                        print("dealt")
-                        print(game.cards)
-                    # If choosing trump let each player choose trump
-                    elif game.choosingTrumpPhase1:
-                        print("Game.choosingTrumpPhase1")
-                        # Send to connections[game.turn] game state
-                        sendMessage(connections, game, game.gameStateBuilder(game.turn))
-                        # Listen for options
-                        option = recvMessage(connections, game)
-                        # Report options to game
-                        game.pickTrumpStage1(game.turn, option)
-                        # If yes, connections[game.dealer] game state
-                        if option == "1":
-                            game.choosingTrumpPhase1 = False
-                            game.discardPhase = True
-                            state = game.gameStateBuilder(game.turn)
-                            connections[game.dealer].send(str.encode(state))
-                            # connections[game.dealer] options (needs to trade card)
-                            option = recvMessage(connections, game)
-                            game.discard(game.dealer, int(option))
-                        # Else next person turn
-                        else:
-                            game.iterateTurn()
-                            if game.turn == game.dealer:
-                                game.choosingTrumpPhase1 = False
-                                game.choosingTrumpPhase2 = True
-                    elif game.choosingTrumpPhase2:
-                        # Send options to player
-                        sendMessage(connections, game, game.gameStateBuilder(game.turn))
-                        # Listen for options
-                        option = recvMessage(connections, game)
-                        # Reprt options to game
-                        if option != "4":
-                            game.pickTrumpStage2(game.turn, int(option))
-                        else:
-                            if game.turn == game.dealer:
-                                game.deal()
-                            else:
-                                game.iterateTurn()
-                    # If playing cards have each player play a card
-                    elif game.playingCardsPhase:
-                        if len(game.moves) == 0:
-                            game.newRound()
-                            # Send options to player
-                            sendMessage(connections, game, game.gameStateBuilder(game.turn))
-                            # Listen for options
-                            option = recvMessage(connections, game)
-                            game.playCard(game.turn, int(option))
-                        else:
-                            if game.leader == game.turn:
-                                game.scoreTrick(game.moves[game.moves[0]], game.moves[game.moves[1]], game.moves[game.moves[2]], game.moves[game.moves[3]])  # TODO: need to fix order of args given for players
-                            else:
-                                # Send options to player
-                                sendMessage(connections, game, game.gameStateBuilder(game.turn))
-                                # Listen for options
-                                option = recvMessage(connections, game)
-                                game.playCard(game.turn, int(option))
+                if game.dealingPhase:
+                    game.gameLoop(game.turn, "nothing")
+                elif game.playingCardsPhase and len(game.moves) == 0:
+                    game.newRound()
+                    sendMessage(connections, game, game.gameStateBuilder(game.turn))
+                    option = recvMessage(connections, game)
+                    game.playCard(game.turn, int(option))
+                else:
+                    try:
                         sendMessage(connections, game, game.gameStateBuilder(game.turn))
                         option = recvMessage(connections, game)
-                    # Check to see if the game is over after plays.
-                    game.checkWinner()
-                except:
-                    e = sys.exc_info()[0]
-                    print(e)
-                    break
+                        game.gameLoop(game.turn, option)
+                    except:
+                        e = sys.exc_info()[0]
+                        print(e)
+                        break
                 # Reporting Phase:
                 try:
-                    playerCursor = 0
-                    for conn in connections:
-                        conn.send(str.encode(game.gameStateBuilder(playerCursor)))
-                        playerCursor += 1
+                    if not game.discardPhase:
+                        playerCursor = 0
+                        for conn in connections:
+                            conn.send(str.encode(game.gameStateBuilder(playerCursor)))
+                            playerCursor += 1
+                    else:
+                        pass
                 except:
                     e = sys.exc_info()[0]
                     print(e)
                     break
-                player = player + 1
         else:
-            print("Lost connection")
-            conn.close()
+            pass
+            # print("Lost connection")
+            # conn.close()
 
 
 def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):

@@ -22,8 +22,8 @@ import random
 
 class Euchre:
     def __init__(self):
-        self.dealingPhase = True
-        self.choosingTrumpPhase1 = False
+        self.dealingPhase = True  # set to this at the start
+        self.choosingTrumpPhase1 = False  # 
         self.choosingTrumpPhase2 = False
         self.discardPhase = False
         self.playingCardsPhase = False
@@ -92,6 +92,36 @@ class Euchre:
         for move in self.moves:
             tempCardsOnTable = tempCardsOnTable + "Player " + self.moves[move] + " played the " + self.getCardText(self.move) + " of " + self.getCardSuitText(move)
         return tempCardsOnTable
+
+    def gameLoop(self, option):
+        if self.dealingPhase:
+            self.deal()
+        elif self.choosingTrumpPhase1:
+            self.pickTrumpStage1(self.turn, option)
+            if option == "1":
+                self.choosingTrumpPhase1 = False
+                self.discardPhase = True
+            else:
+                self.iterateTurn()
+                if self.turn == self.dealer:
+                    self.choosingTrumpPhase1 = False
+                    self.choosingTrumpPhase2 = True
+        elif self.discardPhase:
+            self.discard(self.dealer, int(option))
+        elif self.choosingTrumpPhase2:
+            if option != 4:
+                self.pickTrumpStage2(self.turn, int(option))
+            else:
+                if self.turn == self.dealer:
+                    self.deal()
+                else:
+                    self.iterateTurn()
+        elif self.playingCardsPhase:
+            if self.leader == self.turn:
+                self.scoreTrick(self.moves[self.moves[0]], self.moves[self.moves[1]], self.moves[self.moves[2]], self.moves[self.moves[3]])  # TODO: need to fix order of args given for players
+            else:
+                self.playCard(self.turn, int(option))
+        self.checkWinner()
 
     # builds the current information of the game so the player can use that to think
     def gameStateBuilder(self, playerNumber):
