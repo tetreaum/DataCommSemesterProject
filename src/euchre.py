@@ -52,7 +52,7 @@ class Euchre:
     # The list will still be full after the players have their cards
     def deal(self):
         self.dealer = (self.dealer + 1) % 4
-        self.turn = self.dealer
+        self.turn = (self.dealer + 1) % 4
         random.shuffle(self.cards)
         counter = 0  # The place in the deck
         for hand in self.players:  # For each player
@@ -63,6 +63,7 @@ class Euchre:
         self.kitty = self.cards[20]
         self.dealingPhase = False
         self.choosingTrumpPhase1 = True
+
 
     # A helper method to build tempCardsInHand for gameStateBuilder
     def buildTempCardsInHand(self, playerNum):
@@ -194,8 +195,8 @@ class Euchre:
     # If the player says "yes" take trump, else, next move
     def pickTrumpStage1(self, player, move):
         if move == "1":
-            trump = self.getCardSuit(self.kitty)
-            turn = (self.dealer + 1) % 4
+            self.trump = self.getCardSuit(self.kitty)
+            self.turn = (self.dealer + 1) % 4
             self.choosingTrumpPhase1 = False
             self.playingCardsPhase = True
         else:
