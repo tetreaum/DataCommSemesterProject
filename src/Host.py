@@ -16,6 +16,7 @@ import socket
 import pickle
 import _thread as _thr
 import sys
+import time
 from PIL import Image
 from PIL import ImageTk
 from euchre import Euchre
@@ -24,6 +25,8 @@ HEIGHT = 750
 WIDTH = 800
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 connections = []
 
 
@@ -64,10 +67,10 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
         connections.append(conn)
         print("Connected to: ", addr)
         conn.send(("You are player " + str(player)).encode())
-        if player >= 1:  # TODO: set to 4
+        if player >= 4:  # TODO: set to 4
             while True:  # GameLoop
                 if game.dealingPhase:
-                    game.gameLoop(game.turn, "nothing")
+                    game.gameLoop("nothing")
                 elif game.playingCardsPhase and len(game.moves) == 0:
                     game.newRound()
                     sendMessage(connections, game, game.gameStateBuilder(game.turn))
@@ -77,7 +80,7 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                     try:
                         sendMessage(connections, game, game.gameStateBuilder(game.turn))
                         option = recvMessage(connections, game)
-                        game.gameLoop(game.turn, option)
+                        game.gameLoop(option)
                     except:
                         e = sys.exc_info()[0]
                         print(e)
@@ -135,6 +138,13 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
         # serialData = pickle.dumps(msg)
         # s.send(serialData)
         _thr.start_new_thread(threadServer, (s, name, myIP, myPort, serverIP, serverPort, ))
+
+        time.sleep(1)
+
+        # Connect to the local server we are hosting
+        s2.connect((serverIP, int(serverPort)))
+        _thr.start_new_thread(threaded, (s2, consoleEntry.get(), ))
+
         # TODO: connect to our own server that is running now
         # TODO: in host server thread report back when we have 4 connections
 
