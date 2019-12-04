@@ -111,23 +111,23 @@ class Euchre:
         elif self.choosingTrumpPhase2:
             cardsInHandAndSuitOptions = self.buildCardsInHandAndSuitOptions(self, playerNumber)
             return \
-                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 "\nOptions: " + \
                 cardsInHandAndSuitOptions
         # Calls buildTempCardsInHand and then sends it back to the player with options for which card to remove
         elif self.discardPhase:
-            tempCardsInHand = self.buildTempCardsInHand(self, playerNumber)
+            tempCardsInHand = self.buildTempCardsInHand(playerNumber)
             return \
-                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
                 "\nOptions: " + \
                 tempCardsInHand
         # Calls buildTempCardsInHand and also buildTempCardsOnTable and gives the player their options for what cards to play
         elif self.playingCardsPhase:
-            tempCardsOnTable = self.buildTempCardsOnTable(self)
-            tempCardsInHand = self.buildTempCardsInHand(self, playerNumber)
+            tempCardsOnTable = self.buildTempCardsOnTable()
+            tempCardsInHand = self.buildTempCardsInHand(playerNumber)
             return \
-                "Team One Score: " + self.team1Score + " Team Two Score: " + self.team2Score + \
+                "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 tempCardsOnTable + \
                 "\nOptions: " + \
                 tempCardsInHand
@@ -151,7 +151,7 @@ class Euchre:
 
     # Allows the dealer to switch the card in their hand for the card on the kitty
     def discard(self, player, option):
-        self.players[player].remove(option - 1)
+        self.players[player].pop((option - 1))
         self.players[player].append(self.kitty)
         self.discardPhase = False
         self.playingCardsPhase = True
@@ -159,7 +159,7 @@ class Euchre:
     # a client tells the server what card they want to play
     def playCard(self, player, move):
         self.moves[player] = self.players[player][move]  # the player will tell the HostServer what it wants to play
-        self.players[player].remove(move)  # Note this might be wrong
+        self.players[player].pop(move)  # Note this might be wrong
 
     # If the player says "yes" take trump, else, next move
     def pickTrumpStage1(self, player, move):

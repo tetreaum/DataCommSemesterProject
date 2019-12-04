@@ -29,7 +29,8 @@ connections = []
 
 def threaded(conn, consoleEntryRef):
     # Update the game state
-    consoleDisplay['text'] = conn.recv(4096).decode()
+    while True:
+        consoleDisplay['text'] = conn.recv(4096).decode()
 
 
 # a helper method to send information easier
@@ -89,10 +90,10 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                             game.choosingTrumpPhase1 = False
                             game.discardPhase = True
                             state = game.gameStateBuilder(game.turn)
-                            connections[game.dealer].send(state)
+                            connections[game.dealer].send(str.encode(state))
                             # connections[game.dealer] options (needs to trade card)
                             option = recvMessage(connections, game)
-                            game.discard(game.dealer, option)
+                            game.discard(game.dealer, int(option))
                         # Else next person turn
                         else:
                             game.iterateTurn()
@@ -106,7 +107,7 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                         option = recvMessage(connections, game)
                         # Reprt options to game
                         if option != "4":
-                            game.pickTrumpStage2(game.turn, option)
+                            game.pickTrumpStage2(game.turn, int(option))
                         else:
                             if game.turn == game.dealer:
                                 game.deal()
@@ -120,7 +121,7 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                             sendMessage(connections, game, game.gameStateBuilder(game.turn))
                             # Listen for options
                             option = recvMessage(connections, game)
-                            game.playCard(game.turn, option)
+                            game.playCard(game.turn, int(option))
                         else:
                             if game.leader == game.turn:
                                 game.scoreTrick(game.moves[game.moves[0]], game.moves[game.moves[1]], game.moves[game.moves[2]], game.moves[game.moves[3]])  # TODO: need to fix order of args given for players
@@ -129,7 +130,7 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                                 sendMessage(connections, game, game.gameStateBuilder(game.turn))
                                 # Listen for options
                                 option = recvMessage(connections, game)
-                                game.playCard(game.turn, option)
+                                game.playCard(game.turn, int(option))
                         sendMessage(connections, game, game.gameStateBuilder(game.turn))
                         option = recvMessage(connections, game)
                     # Check to see if the game is over after plays.
@@ -193,9 +194,10 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
 
 
 def executeCommand(consoleEntry):
-    consoleDisplay['text'] = consoleEntry
+    # consoleDisplay['text'] = consoleEntry
     # sendMessage(connections, game, consoleEntry)
-    print("DONE2")
+    s.send(str.encode(consoleEntry))
+    print("sending stuff to server")
 
 
 # ===========================GUI Code starts here===========================
