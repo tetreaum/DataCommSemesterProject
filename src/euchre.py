@@ -64,7 +64,6 @@ class Euchre:
         self.dealingPhase = False
         self.choosingTrumpPhase1 = True
 
-
     # A helper method to build tempCardsInHand for gameStateBuilder
     def buildTempCardsInHand(self, playerNum):
         counter = 1
@@ -76,15 +75,16 @@ class Euchre:
 
     # A helper method to build tempCardsInHand for gameStateBuilder
     def buildCardsInHandAndSuitOptions(self, playerNum):
-        tempCardsInHand = self.buildTempCardsInHand(self, playerNum)
+        tempCardsInHand = self.buildTempCardsInHand(playerNum)
         tempSuits = []
         tempSuitsString = ""
         counter = 1
         for suit in self.suits:
-            if suit != self.kitty.getCardSuit:
+            if suit != self.getCardSuit(self.kitty):
                 tempSuits.append(suit)
         for suit in tempSuits:
             tempSuitsString = tempSuitsString + "\n" + str(counter) + ": " + self.getCardSuitText(suit)
+            counter = counter + 1
         return tempCardsInHand + "\nOptions: " + tempSuitsString + "\n4: Pass"
 
     # A helper method to build tempCardsOnTable for gameStateBuilder
@@ -104,7 +104,7 @@ class Euchre:
                 self.discardPhase = True
             else:
                 self.iterateTurn()
-                if self.turn == self.dealer:
+                if self.turn == self.dealer + 1:
                     self.choosingTrumpPhase1 = False
                     self.choosingTrumpPhase2 = True
         elif self.discardPhase:
@@ -125,14 +125,17 @@ class Euchre:
         self.checkWinner()
 
     # builds the current information of the game so the player can use that to think
-    def gameStateBuilder(self, playerNumber):
+    def gameStateBuilder(self, playerNumber, broadcast):
+        turnString = ""
+        if not broadcast:
+            turnString = "YOUR TURN:\n\n"
         if self.dealingPhase:  # Should never send anything
             return "This text should never appear (See gameStateBuilder in euchre)"
         # Call buildTempCardsInHand to show player what their hand is when choosing trump in phase 1. Gives them a yes or no option
         elif self.choosingTrumpPhase1:
             tempCardsInHand = ""
             tempCardsInHand = self.buildTempCardsInHand(playerNumber)
-            return \
+            return turnString + \
                 "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
                 "\n hand: " + \
@@ -140,15 +143,15 @@ class Euchre:
                 "\nOptions: " + "\n1: Yes\n2: No"
         # Call buildCardsInHandAndSuitOptions to show player what their hand is when choosing trump in phase 2. Gives them a yes or no option
         elif self.choosingTrumpPhase2:
-            cardsInHandAndSuitOptions = self.buildCardsInHandAndSuitOptions(self, playerNumber)
-            return \
+            cardsInHandAndSuitOptions = self.buildCardsInHandAndSuitOptions(playerNumber)
+            return turnString + \
                 "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 "\nOptions: " + \
                 cardsInHandAndSuitOptions
         # Calls buildTempCardsInHand and then sends it back to the player with options for which card to remove
         elif self.discardPhase:
             tempCardsInHand = self.buildTempCardsInHand(playerNumber)
-            return \
+            return turnString + \
                 "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
                 "\nOptions: " + \
@@ -157,7 +160,7 @@ class Euchre:
         elif self.playingCardsPhase:
             tempCardsOnTable = self.buildTempCardsOnTable()
             tempCardsInHand = self.buildTempCardsInHand(playerNumber)
-            return \
+            return turnString + \
                 "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 tempCardsOnTable + \
                 "\nOptions: " + \

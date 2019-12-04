@@ -73,12 +73,12 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                     game.gameLoop("nothing")
                 elif game.playingCardsPhase and len(game.moves) == 0:
                     game.newRound()
-                    sendMessage(connections, game, game.gameStateBuilder(game.turn))
+                    sendMessage(connections, game, game.gameStateBuilder(game.turn, False))
                     option = recvMessage(connections, game)
                     game.playCard(game.turn, int(option))
                 else:
                     try:
-                        sendMessage(connections, game, game.gameStateBuilder(game.turn))
+                        sendMessage(connections, game, game.gameStateBuilder(game.turn, False))
                         option = recvMessage(connections, game)
                         game.gameLoop(option)
                     except:
@@ -90,7 +90,7 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                     if not game.discardPhase:
                         playerCursor = 0
                         for conn in connections:
-                            conn.send(str.encode(game.gameStateBuilder(playerCursor)))
+                            conn.send(str.encode(game.gameStateBuilder(playerCursor, True)))
                             playerCursor += 1
                     else:
                         pass
