@@ -25,7 +25,7 @@ HEIGHT = 750
 WIDTH = 800
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s2 = ""
 
 connections = []
 
@@ -139,9 +139,10 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
         # s.send(serialData)
         _thr.start_new_thread(threadServer, (s, name, myIP, myPort, serverIP, serverPort, ))
 
-        time.sleep(1)
+        time.sleep(0.5)
 
         # Connect to the local server we are hosting
+        s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s2.connect((serverIP, int(serverPort)))
         _thr.start_new_thread(threaded, (s2, consoleEntry.get(), ))
 
@@ -152,8 +153,12 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
 def executeCommand(consoleEntry):
     # consoleDisplay['text'] = consoleEntry
     # sendMessage(connections, game, consoleEntry)
-    s.send(str.encode(consoleEntry))
-    print("sending stuff to server")
+    if s2 == "":
+        s.send(str.encode(consoleEntry))
+        print("sending stuff to server")
+    else: 
+        s2.send(str.encode(consoleEntry))
+        print("sending stuff to server")
 
 
 # ===========================GUI Code starts here===========================
@@ -202,7 +207,7 @@ myIPLabel = tk.Label(myIPFrame, font=('Courier', 12), text='Your IP: ')
 myIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myIPEntry = tk.Entry(myIPFrame, font=('Courier', 12))
-myIPEntry.insert(0, "localhost")  # TODO: remove the default IP
+myIPEntry.insert(0, "35.40.25.15")  # TODO: remove the default IP
 myIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myPortLabel = tk.Label(myPortFrame, font=('Courier', 10), text='Your Host Port: ')
@@ -216,7 +221,7 @@ serverIPLabel = tk.Label(serverIPFrame, font=('Courier', 10), text='Server IP: '
 serverIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverIPEntry = tk.Entry(serverIPFrame, font=('Courier', 12))
-serverIPEntry.insert(0, "localhost")  # TODO: remove the default IP
+serverIPEntry.insert(0, "35.40.25.15")  # TODO: remove the default IP
 serverIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverPortLabel = tk.Label(serverPortFrame, font=('Courier', 10), text='Server Port: ')
