@@ -25,7 +25,7 @@ HEIGHT = 750
 WIDTH = 800
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s2 = ""
+s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 connections = []
 
@@ -142,7 +142,6 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
         time.sleep(0.5)
 
         # Connect to the local server we are hosting
-        s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s2.connect((serverIP, int(serverPort)))
         _thr.start_new_thread(threaded, (s2, consoleEntry.get(), ))
 
@@ -150,13 +149,13 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
         # TODO: in host server thread report back when we have 4 connections
 
 
-def executeCommand(consoleEntry):
+def executeCommand(consoleEntry, myIP, myPort):
     # consoleDisplay['text'] = consoleEntry
     # sendMessage(connections, game, consoleEntry)
-    if s2 == "":
+    if myIP == "" and myPort == "":
         s.send(str.encode(consoleEntry))
         print("sending stuff to server")
-    else: 
+    else:
         s2.send(str.encode(consoleEntry))
         print("sending stuff to server")
 
@@ -240,7 +239,7 @@ consoleDisplay.place(relwidth=1, relheight=0.82)
 consoleEntry = tk.Entry(consoleFrame, font=('Courier', 12))
 consoleEntry.place(relx=0, rely=0.85, relheight=0.15, relwidth=0.65)
 
-executeButton = tk.Button(consoleFrame, text="Execute", font=('Courier', 12), command=lambda: executeCommand(consoleEntry.get()))
+executeButton = tk.Button(consoleFrame, text="Execute", font=('Courier', 12), command=lambda: executeCommand(consoleEntry.get(), myIPEntry.get(), myPortEntry.get()))
 executeButton.place(relx=0.7, rely=0.85, relheight=0.15, relwidth=0.3)
 # ===========================GUI Code ends here===========================
 
