@@ -91,7 +91,7 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                         break
                 # Reporting Phase:
                 try:
-                    if not game.discardPhase:
+                    if not (game.discardPhase or game.dealingPhase):
                         playerCursor = 0
                         for conn in connections:
                             conn.send(str.encode(game.gameStateBuilder(playerCursor, True)))

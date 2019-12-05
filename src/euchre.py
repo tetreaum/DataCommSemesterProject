@@ -195,7 +195,6 @@ class Euchre:
     # clears moves so that the play can not be messed up
     def newRound(self):
         self.moves.clear()
-        self.leader = (self.dealer + 1) % 4
         self.turn = self.leader
 
     # Iterates the turn to the next player
