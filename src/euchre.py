@@ -104,19 +104,20 @@ class Euchre:
                 self.discardPhase = True
             else:
                 self.iterateTurn()
-                if self.turn == self.dealer + 1:
+                if self.turn == (self.dealer + 1) % 4:
                     self.choosingTrumpPhase1 = False
                     self.choosingTrumpPhase2 = True
         elif self.discardPhase:
             self.discard(self.dealer, int(option))
         elif self.choosingTrumpPhase2:
-            if option != 4:
+            if option != "4":
                 self.pickTrumpStage2(self.turn, int(option))
             else:
-                if self.turn == self.dealer:
+                self.iterateTurn()
+                if self.turn == (self.dealer + 1) % 4:
                     self.deal()
                 else:
-                    self.iterateTurn()
+                    pass
         elif self.playingCardsPhase:
             if self.leader == self.turn:
                 self.scoreTrick(self.moves[self.moves[0]], self.moves[self.moves[1]], self.moves[self.moves[2]], self.moves[self.moves[3]])  # TODO: need to fix order of args given for players
@@ -201,7 +202,7 @@ class Euchre:
             self.trump = self.getCardSuit(self.kitty)
             self.turn = (self.dealer + 1) % 4
             self.choosingTrumpPhase1 = False
-            self.playingCardsPhase = True
+            self.discardPhase = True
         else:
             pass  # Next turn
         
@@ -209,7 +210,7 @@ class Euchre:
     def pickTrumpStage2(self, player, option):
         tempSuits = []
         for suit in self.suits:
-            if suit != self.kitty.getCardSuit:
+            if suit != self.getCardSuit(self.kitty):
                 tempSuits.append(suit)
         self.trump = tempSuits[option]
         self.turn = (self.dealer + 1) % 4
@@ -326,15 +327,3 @@ class Euchre:
                 self.winner = 2
         else:
             pass
-
-    # # checks if we have enough players to play
-    # def checkNumPlayers(self):
-    #     return len(self.players)
-
-    # # I don't think we need this.
-    # def connected(self):
-    #     return self.ready  # tells the server who is all connected
-
-    # # returns the cards available in a players hand that they can play
-    # def getPlayerHand(self, p):
-    #     return self.players[p]  # return the cards in that player's hand

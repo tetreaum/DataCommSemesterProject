@@ -37,14 +37,14 @@ def threaded(conn, consoleEntryRef):
 
 
 # a helper method to send information easier
-def sendMessage(conn, game, message):
-    conn[game.turn].send(str.encode(message))
+def sendMessage(conn, playerNum, message):
+    conn[playerNum].send(str.encode(message))
 
 
 # a helper message to recv information eaiser
 # conn.send(str.encode("GameState"))
-def recvMessage(conn, game):
-    return conn[game.turn].recv(4096).decode()
+def recvMessage(conn, playerNum):
+    return conn[playerNum].recv(4096).decode()
 
 
 # THe server's gameLoop and connection logic
@@ -73,12 +73,16 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                     game.gameLoop("nothing")
                 elif game.playingCardsPhase and len(game.moves) == 0:
                     game.newRound()
-                    sendMessage(connections, game, game.gameStateBuilder(game.turn, False))
+                    sendMessage(connections, game.turn, game.gameStateBuilder(game.turn, False))
                     option = recvMessage(connections, game)
+                    game.playCard(game.turn, int(option))
+                elif game.discardPhase:
+                    sendMessage(connections, game.dealer, game.gameStateBuilder(game.dealer, False))
+                    option = recvMessage(connections, game.dealer)
                     game.playCard(game.turn, int(option))
                 else:
                     try:
-                        sendMessage(connections, game, game.gameStateBuilder(game.turn, False))
+                        sendMessage(connections, game.turn, game.gameStateBuilder(game.turn, False))
                         option = recvMessage(connections, game)
                         game.gameLoop(option)
                     except:
