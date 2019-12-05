@@ -31,6 +31,7 @@ class Euchre:
         self.turn = 0  # Iterate in playCard, keeps track of whose playing
         self.ready = True  # When all players have redied up
         self.moves = {}  # A list of the moves that have been played
+        self.scores = [0, 0]
         self.players = {}  # A list of players and their hands
         self.dealer = -1  # The current dealer (set in deal)
         self.leader = 0  # The player who will play first
@@ -119,8 +120,25 @@ class Euchre:
                 else:
                     pass
         elif self.playingCardsPhase:
-            if self.leader == self.turn:
-                self.scoreTrick(self.moves[self.moves[0]], self.moves[self.moves[1]], self.moves[self.moves[2]], self.moves[self.moves[3]])  # TODO: need to fix order of args given for players
+            if self.leader == (self.turn + 1) % 4:
+                self.playCard(self.turn, int(option))
+                winner = self.scoreTrick(self.moves[0], self.moves[1], self.moves[2], self.moves[3])
+                if winner == 0 or winner == 2:
+                    self.scores[0] = self.scores[0] + 1
+                elif winner == 1 or winner == 3:
+                    self.scores[1] = self.scores[1] + 1
+                else:
+                    print("Scoring tricks is broken (line 131ish in gameloop)")
+                if self.scores[0] + self.scores[1] == 5:
+                    if self.scores[0] > self.scores[1]:
+                        self.team1Score = self.team1Score + 1
+                    elif self.scores[0] < self.scores[1]:
+                        self.team2Score = self.team2Score + 1
+                    self.scores = [0, 0]
+                    self.playingCardsPhase = False
+                    self.dealingPhase = True
+                else:
+                    pass  # do nothing the hand isn't done yet
             else:
                 self.playCard(self.turn, int(option))
         self.checkWinner()
@@ -270,52 +288,65 @@ class Euchre:
 
     # Compares cards from each hand, returns the number of the player who won the trick
     def scoreTrick(self, playerOne, playerTwo, playerThree, playerFour):
-
+        tempScore1 = playerOne
+        tempScore2 = playerTwo
+        tempScore3 = playerThree
+        tempScore4 = playerFour
         # Checks for right bower or trump
         if self.getCardSuit(playerOne) == self.trump:
             if self.getCard(playerOne) == 3:
-                playerOne = playerOne + 500
+                tempScore1 = tempScore1 + 500
             else:
-                playerOne = playerOne + 100
+                tempScore1 = tempScore1 + 100
         if self.getCardSuit(playerTwo) == self.trump:
             if self.getCard(playerTwo) == 3:
-                playerTwo = playerTwo + 500
+                tempScore2 = tempScore2 + 500
             else:
-                playerTwo = playerTwo + 100
+                tempScore2 = tempScore2 + 100
         if self.getCardSuit(playerThree) == self.trump:
             if self.getCard(playerThree) == 3:
-                playerThree = playerThree + 500
+                tempScore3 = tempScore3 + 500
             else:
-                playerThree = playerThree + 100
+                tempScore3 = tempScore3 + 100
         if self.getCardSuit(playerFour) == self.trump:
             if self.getCard(playerFour) == 3:
-                playerFour = playerFour + 500
+                tempScore4 = tempScore4 + 500
             else:
-                playerFour = playerFour + 100
+                tempScore4 = tempScore4 + 100
 
         # Check for left bower
         if self.getCard(playerOne) == 3 and self.getCardSuit(playerOne) == self.suitComp(self.trump):
-            playerOne = playerOne + 250
+            tempScore1 = tempScore1 + 250
         if self.getCard(playerTwo) == 3 and self.getCardSuit(playerTwo) == self.suitComp(self.trump):
-            playerTwo = playerTwo + 250
+            tempScore2 = tempScore2 + 250
         if self.getCard(playerThree) == 3 and self.getCardSuit(playerThree) == self.suitComp(self.trump):
-            playerThree = playerThree + 250
+            tempScore3 = tempScore3 + 250
         if self.getCard(playerFour) == 3 and self.getCardSuit(playerFour) == self.suitComp(self.trump):
-            playerFour = playerFour + 250
+            tempScore4 = tempScore4 + 250
 
-        if playerOne > playerTwo and playerOne > playerThree and playerOne > playerFour:
+        # Check for same suit as lead
+        if self.getCardSuit(playerOne) == self.getCardSuit(self.moves[self.leader]):
+            tempScore1 = tempScore1 + 50
+        if self.getCardSuit(playerTwo) == self.getCardSuit(self.moves[self.leader]):
+            tempScore2 = tempScore2 + 50
+        if self.getCardSuit(playerThree) == self.getCardSuit(self.moves[self.leader]):
+            tempScore3 = tempScore3 + 50
+        if self.getCardSuit(playerFour) == self.getCardSuit(self.moves[self.leader]):
+            tempScore4 = tempScore4 + 50
+
+        if tempScore1 > tempScore2 and tempScore1 > tempScore3 and tempScore1 > tempScore4:
             self.leader = 0
             self.newRound()
             return 0
-        elif playerTwo > playerOne and playerTwo > playerThree and playerTwo > playerFour:
+        elif tempScore2 > tempScore1 and tempScore2 > tempScore3 and tempScore2 > tempScore4:
             self.leader = 1
             self.newRound()
             return 1
-        elif playerThree > playerOne and playerThree > playerTwo and playerThree > playerFour:
+        elif tempScore3 > tempScore1 and tempScore3 > tempScore2 and tempScore3 > tempScore4:
             self.leader = 2
             self.newRound()
             return 2
-        elif playerFour > playerOne and playerFour > playerTwo and playerFour > playerThree:
+        elif tempScore4 > tempScore1 and tempScore4 > tempScore2 and tempScore4 > tempScore3:
             self.leader = 3
             self.newRound()
             return 3
