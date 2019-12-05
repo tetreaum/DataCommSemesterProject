@@ -1,14 +1,6 @@
 """
-A file to hold the GUI logic and instantiation of the host server. When the user connects to the
-CentralServer with the intent to host games it will start a new instance of HostServerThread.
-HostServerThread will then create HostServerWorkerThreads as it receives connections from outside.
-After Host has created its own HostServer it will then connect to itself through a socket so all
-players can be handled the same way.
+A file to hold the logic for our P2P Euchre client. It acts as both a server and a client. 
 Run pip install pillow in the command line to access PIL
-
-This is modeled loosely after both the client and the server in the tutorial here but we did a lot
-of the code in here custom ouselves
-https://techwithtim.net/tutorials/python-online-game-tutorial/online-rock-paper-scissors-p1/
 """
 import tkinter as tk
 import tkinter.font

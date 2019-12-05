@@ -1,9 +1,5 @@
 """
-A class to hold all of our game logic. It's very loosely based on how the tutorial below
-has their game logic for rock paper scissors. However, our game is much more complex and
-we wrote all of the game logic ourselves.
-https://techwithtim.net/tutorials/python-online-game-tutorial/online-rock-paper-scissors-p1/
-For cards, the first digit is the card value, and the second digit is the suit
+A class to hold all of our game logic.
 
 NINE = 1
 TEN = 2
