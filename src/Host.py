@@ -80,6 +80,8 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                     sendMessage(connections, game.dealer, game.gameStateBuilder(game.dealer, False))
                     option = recvMessage(connections, game.dealer)
                     game.gameLoop(option)
+                elif game.gameEnd:
+                    pass
                 else:
                     try:
                         sendMessage(connections, game.turn, game.gameStateBuilder(game.turn, False))
@@ -104,6 +106,8 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
                 except:
                     e = sys.exc_info()[0]
                     print(e)
+                    break
+                if game.gameEnd:
                     break
         else:
             pass

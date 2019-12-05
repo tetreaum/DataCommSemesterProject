@@ -355,7 +355,7 @@ class Euchre:
     # Checks to see if either team has won, will be played between tricks. If no one has won, return "No"
     def checkWinner(self):
         if (self.team1Score > 9) or (self.team2Score > 9):
-            if self.team1Score > 9:
+            if self.team1Score > 0:
                 self.gameEnd = True
                 self.winner = 1
             else:
