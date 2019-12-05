@@ -1,3 +1,7 @@
+from src.GameBoard import GameBoard
+from src.Player import Player
+
+
 class NewGame:
 	def main():
 		 game = GameBoard()
