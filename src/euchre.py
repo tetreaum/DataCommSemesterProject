@@ -1,6 +1,7 @@
 """
 A class to hold all of our game logic.
 
+Card codes
 NINE = 1
 TEN = 2
 JACK = 3
@@ -8,6 +9,7 @@ QUEEN = 4
 KING = 5
 ACE = 6
 
+Suit Codes
 CLUBS = 0
 DIAMONDS = 1
 HEARTS = 2
