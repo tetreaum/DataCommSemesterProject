@@ -67,11 +67,11 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
         connections.append(conn)
         print("Connected to: ", addr)
         conn.send(("You are player " + str(player)).encode())
-        if player >= 4:  # TODO: set to 4
+        if player >= 4:
             while True:  # GameLoop
                 if game.dealingPhase:
                     game.gameLoop("nothing")
-                elif game.playingCardsPhase and len(game.moves) == 0:  # TODO: Fix this logic
+                elif game.playingCardsPhase and len(game.moves) == 0:
                     game.leader = (game.dealer + 1) % 4
                     game.newRound()
                     sendMessage(connections, game.turn, game.gameStateBuilder(game.turn, False))
@@ -137,18 +137,9 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
                     displayText += (keys + " : " + values + "\n")
                     print(keys + " : " + values + "\n")
                     consoleDisplay['text'] = displayText
-        else:  # Game specific logic here
-            # TODO Create thread to handle server output and listen for new output every 1 second or something like that
+        else:
             _thr.start_new_thread(threaded, (s, consoleEntry.get(), ))
-            # msg = s.recv(4096).decode()
-            # print(msg)
-
     else:
-        # # TODO: connect to central server, tell it we're hosting
-        # msg = {"name": name, "myIP": myIP, "myPort": myPort, "serverIP": serverIP, "serverPort": serverPort}
-        # print("I'm hosting, starting server")
-        # serialData = pickle.dumps(msg)
-        # s.send(serialData)
         _thr.start_new_thread(threadServer, (s, name, myIP, myPort, serverIP, serverPort, ))
 
         time.sleep(0.5)
@@ -156,9 +147,6 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
         # Connect to the local server we are hosting
         s2.connect((serverIP, int(serverPort)))
         _thr.start_new_thread(threaded, (s2, consoleEntry.get(), ))
-
-        # TODO: connect to our own server that is running now
-        # TODO: in host server thread report back when we have 4 connections
 
 
 def executeCommand(consoleEntry, myIP, myPort):
@@ -218,28 +206,24 @@ myIPLabel = tk.Label(myIPFrame, font=('Courier', 12), text='Your IP: ')
 myIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myIPEntry = tk.Entry(myIPFrame, font=('Courier', 12))
-myIPEntry.insert(0, "35.40.25.15")  # TODO: remove the default IP
 myIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myPortLabel = tk.Label(myPortFrame, font=('Courier', 10), text='Your Host Port: ')
 myPortLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myPortEntry = tk.Entry(myPortFrame, font=('Courier', 12))
-myPortEntry.insert(0, "5555")  # TODO: remove the default Port
 myPortEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverIPLabel = tk.Label(serverIPFrame, font=('Courier', 10), text='Server IP: ')
 serverIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverIPEntry = tk.Entry(serverIPFrame, font=('Courier', 12))
-serverIPEntry.insert(0, "35.40.25.15")  # TODO: remove the default IP
 serverIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverPortLabel = tk.Label(serverPortFrame, font=('Courier', 10), text='Server Port: ')
 serverPortLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverPortEntry = tk.Entry(serverPortFrame, font=('Courier', 12))
-serverPortEntry.insert(0, "5555")  # TODO: remove the default Port
 serverPortEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 connectButton = tk.Button(connectButtonFrame, text="Connect", font=('Courier', 12), command=lambda: connect(nameEntry.get(), myIPEntry.get(), myPortEntry.get(), serverIPEntry.get(), serverPortEntry.get(), consoleEntry.get()))
