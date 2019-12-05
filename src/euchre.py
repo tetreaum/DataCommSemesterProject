@@ -23,7 +23,7 @@ import random
 class Euchre:
     def __init__(self):
         self.dealingPhase = True  # set to this at the start
-        self.choosingTrumpPhase1 = False  # 
+        self.choosingTrumpPhase1 = False
         self.choosingTrumpPhase2 = False
         self.discardPhase = False
         self.playingCardsPhase = False
@@ -35,7 +35,7 @@ class Euchre:
         self.players = {}  # A list of players and their hands
         self.dealer = -1  # The current dealer (set in deal)
         self.leader = 0  # The player who will play first
-        self.trump = 0  # The current trump suit
+        self.trump = -1  # The current trump suit
         self.team1Score = 0  # The current score for team one
         self.team2Score = 0  # The current score for team two
         self.winner = -1
@@ -68,7 +68,7 @@ class Euchre:
     # A helper method to build tempCardsInHand for gameStateBuilder
     def buildTempCardsInHand(self, playerNum):
         counter = 1
-        tempCardsInHand = self.getCardSuitText(self.trump)
+        tempCardsInHand = "\nTrump: " + self.getCardSuitText(self.trump)
         for card in self.players[playerNum]:
             tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(card) + " of " + self.getCardSuitText(card)
             counter = counter + 1
@@ -354,12 +354,12 @@ class Euchre:
 
     # Checks to see if either team has won, will be played between tricks. If no one has won, return "No"
     def checkWinner(self):
-        if (self.team1Score > 9) or (self.team2Score > 9):
+        if (self.team1Score > 0) or (self.team2Score > 0):
+            self.gameEnd = True
+            self.dealingPhase = False
             if self.team1Score > 0:
-                self.gameEnd = True
                 self.winner = 1
             else:
-                self.gameEnd = True
                 self.winner = 2
         else:
             pass
