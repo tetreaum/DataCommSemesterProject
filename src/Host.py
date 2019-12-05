@@ -16,6 +16,7 @@ import socket
 import pickle
 import _thread as _thr
 import sys
+import time
 from PIL import Image
 from PIL import ImageTk
 from euchre import Euchre
@@ -24,6 +25,8 @@ HEIGHT = 750
 WIDTH = 800
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 connections = []
 
 
@@ -34,14 +37,14 @@ def threaded(conn, consoleEntryRef):
 
 
 # a helper method to send information easier
-def sendMessage(conn, game, message):
-    conn[game.turn].send(str.encode(message))
+def sendMessage(conn, playerNum, message):
+    conn[playerNum].send(str.encode(message))
 
 
 # a helper message to recv information eaiser
 # conn.send(str.encode("GameState"))
-def recvMessage(conn, game):
-    return conn[game.turn].recv(4096).decode()
+def recvMessage(conn, playerNum):
+    return conn[playerNum].recv(4096).decode()
 
 
 # THe server's gameLoop and connection logic
@@ -63,96 +66,54 @@ def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
         player = player + 1
         connections.append(conn)
         print("Connected to: ", addr)
-        if player >= 1:  # TODO: set to 4
-            # conn.send((str(player)).encode())
-
-            reply = ""
+        conn.send(("You are player " + str(player)).encode())
+        if player >= 4:  # TODO: set to 4
             while True:  # GameLoop
-                print("in the game loop")
-                try:
-                    # If dealing do the dealing stuff
-                    if game.dealingPhase:
-                        print("Dealing")
-                        game.deal()
-                        print("dealt")
-                        print(game.cards)
-                    # If choosing trump let each player choose trump
-                    elif game.choosingTrumpPhase1:
-                        print("Game.choosingTrumpPhase1")
-                        # Send to connections[game.turn] game state
-                        sendMessage(connections, game, game.gameStateBuilder(game.turn))
-                        # Listen for options
-                        option = recvMessage(connections, game)
-                        # Report options to game
-                        game.pickTrumpStage1(game.turn, option)
-                        # If yes, connections[game.dealer] game state
-                        if option == "1":
-                            game.choosingTrumpPhase1 = False
-                            game.discardPhase = True
-                            state = game.gameStateBuilder(game.turn)
-                            connections[game.dealer].send(str.encode(state))
-                            # connections[game.dealer] options (needs to trade card)
-                            option = recvMessage(connections, game)
-                            game.discard(game.dealer, int(option))
-                        # Else next person turn
-                        else:
-                            game.iterateTurn()
-                            if game.turn == game.dealer:
-                                game.choosingTrumpPhase1 = False
-                                game.choosingTrumpPhase2 = True
-                    elif game.choosingTrumpPhase2:
-                        # Send options to player
-                        sendMessage(connections, game, game.gameStateBuilder(game.turn))
-                        # Listen for options
-                        option = recvMessage(connections, game)
-                        # Reprt options to game
-                        if option != "4":
-                            game.pickTrumpStage2(game.turn, int(option))
-                        else:
-                            if game.turn == game.dealer:
-                                game.deal()
-                            else:
-                                game.iterateTurn()
-                    # If playing cards have each player play a card
-                    elif game.playingCardsPhase:
-                        if len(game.moves) == 0:
-                            game.newRound()
-                            # Send options to player
-                            sendMessage(connections, game, game.gameStateBuilder(game.turn))
-                            # Listen for options
-                            option = recvMessage(connections, game)
-                            game.playCard(game.turn, int(option))
-                        else:
-                            if game.leader == game.turn:
-                                game.scoreTrick(game.moves[game.moves[0]], game.moves[game.moves[1]], game.moves[game.moves[2]], game.moves[game.moves[3]])  # TODO: need to fix order of args given for players
-                            else:
-                                # Send options to player
-                                sendMessage(connections, game, game.gameStateBuilder(game.turn))
-                                # Listen for options
-                                option = recvMessage(connections, game)
-                                game.playCard(game.turn, int(option))
-                        sendMessage(connections, game, game.gameStateBuilder(game.turn))
-                        option = recvMessage(connections, game)
-                    # Check to see if the game is over after plays.
-                    game.checkWinner()
-                except:
-                    e = sys.exc_info()[0]
-                    print(e)
-                    break
+                if game.dealingPhase:
+                    game.gameLoop("nothing")
+                elif game.playingCardsPhase and len(game.moves) == 0:  # TODO: Fix this logic
+                    game.leader = (game.dealer + 1) % 4
+                    game.newRound()
+                    sendMessage(connections, game.turn, game.gameStateBuilder(game.turn, False))
+                    option = recvMessage(connections, game.turn)
+                    game.playCard(game.turn, int(option))
+                elif game.discardPhase:
+                    sendMessage(connections, game.dealer, game.gameStateBuilder(game.dealer, False))
+                    option = recvMessage(connections, game.dealer)
+                    game.gameLoop(option)
+                elif game.gameEnd:
+                    pass
+                else:
+                    try:
+                        sendMessage(connections, game.turn, game.gameStateBuilder(game.turn, False))
+                        option = recvMessage(connections, game.turn)
+                        game.gameLoop(option)
+                    except:
+                        e = sys.exc_info()[0]
+                        print(e)
+                        break
                 # Reporting Phase:
                 try:
-                    playerCursor = 0
-                    for conn in connections:
-                        conn.send(str.encode(game.gameStateBuilder(playerCursor)))
-                        playerCursor += 1
+                    if not (game.discardPhase or game.dealingPhase):
+                        playerCursor = 0
+                        for conn in connections:
+                            conn.send(str.encode(game.gameStateBuilder(playerCursor, True)))
+                            playerCursor += 1
+                    else:
+                        playerCursor = 0
+                        for conn in connections:
+                            conn.send(str.encode("The dealer is picking their card"))
+                            playerCursor += 1
                 except:
                     e = sys.exc_info()[0]
                     print(e)
                     break
-                player = player + 1
+                if game.gameEnd:
+                    break
         else:
-            print("Lost connection")
-            conn.close()
+            pass
+            # print("Lost connection")
+            # conn.close()
 
 
 def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
@@ -189,15 +150,26 @@ def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
         # serialData = pickle.dumps(msg)
         # s.send(serialData)
         _thr.start_new_thread(threadServer, (s, name, myIP, myPort, serverIP, serverPort, ))
+
+        time.sleep(0.5)
+
+        # Connect to the local server we are hosting
+        s2.connect((serverIP, int(serverPort)))
+        _thr.start_new_thread(threaded, (s2, consoleEntry.get(), ))
+
         # TODO: connect to our own server that is running now
         # TODO: in host server thread report back when we have 4 connections
 
 
-def executeCommand(consoleEntry):
+def executeCommand(consoleEntry, myIP, myPort):
     # consoleDisplay['text'] = consoleEntry
     # sendMessage(connections, game, consoleEntry)
-    s.send(str.encode(consoleEntry))
-    print("sending stuff to server")
+    if myIP == "" and myPort == "":
+        s.send(str.encode(consoleEntry))
+        print("sending stuff to server")
+    else:
+        s2.send(str.encode(consoleEntry))
+        print("sending stuff to server")
 
 
 # ===========================GUI Code starts here===========================
@@ -246,7 +218,7 @@ myIPLabel = tk.Label(myIPFrame, font=('Courier', 12), text='Your IP: ')
 myIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myIPEntry = tk.Entry(myIPFrame, font=('Courier', 12))
-myIPEntry.insert(0, "localhost")  # TODO: remove the default IP
+myIPEntry.insert(0, "35.40.25.15")  # TODO: remove the default IP
 myIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 myPortLabel = tk.Label(myPortFrame, font=('Courier', 10), text='Your Host Port: ')
@@ -260,7 +232,7 @@ serverIPLabel = tk.Label(serverIPFrame, font=('Courier', 10), text='Server IP: '
 serverIPLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverIPEntry = tk.Entry(serverIPFrame, font=('Courier', 12))
-serverIPEntry.insert(0, "localhost")  # TODO: remove the default IP
+serverIPEntry.insert(0, "35.40.25.15")  # TODO: remove the default IP
 serverIPEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
 serverPortLabel = tk.Label(serverPortFrame, font=('Courier', 10), text='Server Port: ')
@@ -279,7 +251,7 @@ consoleDisplay.place(relwidth=1, relheight=0.82)
 consoleEntry = tk.Entry(consoleFrame, font=('Courier', 12))
 consoleEntry.place(relx=0, rely=0.85, relheight=0.15, relwidth=0.65)
 
-executeButton = tk.Button(consoleFrame, text="Execute", font=('Courier', 12), command=lambda: executeCommand(consoleEntry.get()))
+executeButton = tk.Button(consoleFrame, text="Execute", font=('Courier', 12), command=lambda: executeCommand(consoleEntry.get(), myIPEntry.get(), myPortEntry.get()))
 executeButton.place(relx=0.7, rely=0.85, relheight=0.15, relwidth=0.3)
 # ===========================GUI Code ends here===========================
 

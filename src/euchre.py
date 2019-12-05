@@ -22,7 +22,7 @@ import random
 
 class Euchre:
     def __init__(self):
-        self.dealingPhase = True
+        self.dealingPhase = True  # set to this at the start
         self.choosingTrumpPhase1 = False
         self.choosingTrumpPhase2 = False
         self.discardPhase = False
@@ -31,10 +31,11 @@ class Euchre:
         self.turn = 0  # Iterate in playCard, keeps track of whose playing
         self.ready = True  # When all players have redied up
         self.moves = {}  # A list of the moves that have been played
+        self.scores = [0, 0]
         self.players = {}  # A list of players and their hands
         self.dealer = -1  # The current dealer (set in deal)
         self.leader = 0  # The player who will play first
-        self.trump = 0  # The current trump suit
+        self.trump = -1  # The current trump suit
         self.team1Score = 0  # The current score for team one
         self.team2Score = 0  # The current score for team two
         self.winner = -1
@@ -52,7 +53,7 @@ class Euchre:
     # The list will still be full after the players have their cards
     def deal(self):
         self.dealer = (self.dealer + 1) % 4
-        self.turn = self.dealer
+        self.turn = (self.dealer + 1) % 4
         random.shuffle(self.cards)
         counter = 0  # The place in the deck
         for hand in self.players:  # For each player
@@ -67,7 +68,7 @@ class Euchre:
     # A helper method to build tempCardsInHand for gameStateBuilder
     def buildTempCardsInHand(self, playerNum):
         counter = 1
-        tempCardsInHand = ""
+        tempCardsInHand = "\nTrump: " + self.getCardSuitText(self.trump)
         for card in self.players[playerNum]:
             tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(card) + " of " + self.getCardSuitText(card)
             counter = counter + 1
@@ -75,33 +76,85 @@ class Euchre:
 
     # A helper method to build tempCardsInHand for gameStateBuilder
     def buildCardsInHandAndSuitOptions(self, playerNum):
-        tempCardsInHand = self.buildTempCardsInHand(self, playerNum)
+        tempCardsInHand = self.buildTempCardsInHand(playerNum)
         tempSuits = []
         tempSuitsString = ""
         counter = 1
         for suit in self.suits:
-            if suit != self.kitty.getCardSuit:
+            if suit != self.getCardSuit(self.kitty):
                 tempSuits.append(suit)
         for suit in tempSuits:
             tempSuitsString = tempSuitsString + "\n" + str(counter) + ": " + self.getCardSuitText(suit)
+            counter = counter + 1
         return tempCardsInHand + "\nOptions: " + tempSuitsString + "\n4: Pass"
 
     # A helper method to build tempCardsOnTable for gameStateBuilder
     def buildTempCardsOnTable(self):
         tempCardsOnTable = ""
         for move in self.moves:
-            tempCardsOnTable = tempCardsOnTable + "Player " + self.moves[move] + " played the " + self.getCardText(self.move) + " of " + self.getCardSuitText(move)
+            tempCardsOnTable = tempCardsOnTable + "\nPlayer " + str(move) + ": played the " + self.getCardText(self.moves[move]) + " of " + self.getCardSuitText(self.moves[move])
         return tempCardsOnTable
 
+    def gameLoop(self, option):
+        if self.dealingPhase:
+            self.deal()
+        elif self.choosingTrumpPhase1:
+            self.pickTrumpStage1(self.turn, option)
+            if option == "1":
+                self.choosingTrumpPhase1 = False
+                self.discardPhase = True
+            else:
+                self.iterateTurn()
+                if self.turn == (self.dealer + 1) % 4:
+                    self.choosingTrumpPhase1 = False
+                    self.choosingTrumpPhase2 = True
+        elif self.discardPhase:
+            self.discard(self.dealer, int(option))
+        elif self.choosingTrumpPhase2:
+            if option != "4":
+                self.pickTrumpStage2(self.turn, int(option))
+            else:
+                self.iterateTurn()
+                if self.turn == (self.dealer + 1) % 4:
+                    self.deal()
+                else:
+                    pass
+        elif self.playingCardsPhase:
+            if self.leader == (self.turn + 1) % 4:
+                self.playCard(self.turn, int(option))
+                winner = self.scoreTrick(self.moves[0], self.moves[1], self.moves[2], self.moves[3])
+                if winner == 0 or winner == 2:
+                    self.scores[0] = self.scores[0] + 1
+                elif winner == 1 or winner == 3:
+                    self.scores[1] = self.scores[1] + 1
+                else:
+                    print("Scoring tricks is broken (line 131ish in gameloop)")
+                if self.scores[0] + self.scores[1] == 5:
+                    if self.scores[0] > self.scores[1]:
+                        self.team1Score = self.team1Score + 1
+                    elif self.scores[0] < self.scores[1]:
+                        self.team2Score = self.team2Score + 1
+                    self.scores = [0, 0]
+                    self.playingCardsPhase = False
+                    self.dealingPhase = True
+                else:
+                    pass  # do nothing the hand isn't done yet
+            else:
+                self.playCard(self.turn, int(option))
+        self.checkWinner()
+
     # builds the current information of the game so the player can use that to think
-    def gameStateBuilder(self, playerNumber):
+    def gameStateBuilder(self, playerNumber, broadcast):
+        turnString = ""
+        if not broadcast:
+            turnString = "YOUR TURN:\n\n"
         if self.dealingPhase:  # Should never send anything
             return "This text should never appear (See gameStateBuilder in euchre)"
         # Call buildTempCardsInHand to show player what their hand is when choosing trump in phase 1. Gives them a yes or no option
         elif self.choosingTrumpPhase1:
             tempCardsInHand = ""
             tempCardsInHand = self.buildTempCardsInHand(playerNumber)
-            return \
+            return turnString + \
                 "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
                 "\n hand: " + \
@@ -109,15 +162,15 @@ class Euchre:
                 "\nOptions: " + "\n1: Yes\n2: No"
         # Call buildCardsInHandAndSuitOptions to show player what their hand is when choosing trump in phase 2. Gives them a yes or no option
         elif self.choosingTrumpPhase2:
-            cardsInHandAndSuitOptions = self.buildCardsInHandAndSuitOptions(self, playerNumber)
-            return \
+            cardsInHandAndSuitOptions = self.buildCardsInHandAndSuitOptions(playerNumber)
+            return turnString + \
                 "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 "\nOptions: " + \
                 cardsInHandAndSuitOptions
         # Calls buildTempCardsInHand and then sends it back to the player with options for which card to remove
         elif self.discardPhase:
             tempCardsInHand = self.buildTempCardsInHand(playerNumber)
-            return \
+            return turnString + \
                 "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 "\nKitty: " + self.getCardText(self.kitty) + " of " + self.getCardSuitText(self.kitty) + \
                 "\nOptions: " + \
@@ -126,7 +179,7 @@ class Euchre:
         elif self.playingCardsPhase:
             tempCardsOnTable = self.buildTempCardsOnTable()
             tempCardsInHand = self.buildTempCardsInHand(playerNumber)
-            return \
+            return turnString + \
                 "Team One Score: " + str(self.team1Score) + " Team Two Score: " + str(self.team2Score) + \
                 tempCardsOnTable + \
                 "\nOptions: " + \
@@ -142,7 +195,6 @@ class Euchre:
     # clears moves so that the play can not be messed up
     def newRound(self):
         self.moves.clear()
-        self.leader = (self.dealer + 1) % 4
         self.turn = self.leader
 
     # Iterates the turn to the next player
@@ -158,16 +210,17 @@ class Euchre:
 
     # a client tells the server what card they want to play
     def playCard(self, player, move):
-        self.moves[player] = self.players[player][move]  # the player will tell the HostServer what it wants to play
-        self.players[player].pop(move)  # Note this might be wrong
+        self.moves[player] = self.players[player][move - 1]  # the player will tell the HostServer what it wants to play
+        self.players[player].pop(move - 1)  # Note this might be wrong
+        self.iterateTurn()
 
     # If the player says "yes" take trump, else, next move
     def pickTrumpStage1(self, player, move):
         if move == "1":
-            trump = self.getCardSuit(self.kitty)
-            turn = (self.dealer + 1) % 4
+            self.trump = self.getCardSuit(self.kitty)
+            self.turn = (self.dealer + 1) % 4
             self.choosingTrumpPhase1 = False
-            self.playingCardsPhase = True
+            self.discardPhase = True
         else:
             pass  # Next turn
         
@@ -175,9 +228,9 @@ class Euchre:
     def pickTrumpStage2(self, player, option):
         tempSuits = []
         for suit in self.suits:
-            if suit != self.kitty.getCardSuit:
+            if suit != self.getCardSuit(self.kitty):
                 tempSuits.append(suit)
-        self.trump = tempSuits[option]
+        self.trump = tempSuits[option - 1]
         self.turn = (self.dealer + 1) % 4
         self.choosingTrumpPhase2 = False
         self.playingCardsPhase = True
@@ -219,7 +272,7 @@ class Euchre:
         elif suitNum == 3:
             return "Spades"
         else:
-            return "This text should never appear (See getCardText)"
+            return "Trump Not Selected Yet"
 
     # Helper method to get if the card is a left bower
     def suitComp(self, index):
@@ -234,73 +287,79 @@ class Euchre:
 
     # Compares cards from each hand, returns the number of the player who won the trick
     def scoreTrick(self, playerOne, playerTwo, playerThree, playerFour):
+        tempScore1 = playerOne
+        tempScore2 = playerTwo
+        tempScore3 = playerThree
+        tempScore4 = playerFour
         # Checks for right bower or trump
         if self.getCardSuit(playerOne) == self.trump:
             if self.getCard(playerOne) == 3:
-                playerOne = playerOne + 500
+                tempScore1 = tempScore1 + 500
             else:
-                playerOne = playerOne + 100
+                tempScore1 = tempScore1 + 100
         if self.getCardSuit(playerTwo) == self.trump:
             if self.getCard(playerTwo) == 3:
-                playerTwo = playerTwo + 500
+                tempScore2 = tempScore2 + 500
             else:
-                playerTwo = playerTwo + 100
+                tempScore2 = tempScore2 + 100
         if self.getCardSuit(playerThree) == self.trump:
             if self.getCard(playerThree) == 3:
-                playerThree = playerThree + 500
+                tempScore3 = tempScore3 + 500
             else:
-                playerThree = playerThree + 100
+                tempScore3 = tempScore3 + 100
         if self.getCardSuit(playerFour) == self.trump:
             if self.getCard(playerFour) == 3:
-                playerFour = playerFour + 500
+                tempScore4 = tempScore4 + 500
             else:
-                playerFour = playerFour + 100
+                tempScore4 = tempScore4 + 100
 
         # Check for left bower
         if self.getCard(playerOne) == 3 and self.getCardSuit(playerOne) == self.suitComp(self.trump):
-            playerOne = playerOne + 250
+            tempScore1 = tempScore1 + 250
         if self.getCard(playerTwo) == 3 and self.getCardSuit(playerTwo) == self.suitComp(self.trump):
-            playerTwo = playerTwo + 250
+            tempScore2 = tempScore2 + 250
         if self.getCard(playerThree) == 3 and self.getCardSuit(playerThree) == self.suitComp(self.trump):
-            playerThree = playerThree + 250
+            tempScore3 = tempScore3 + 250
         if self.getCard(playerFour) == 3 and self.getCardSuit(playerFour) == self.suitComp(self.trump):
-            playerFour = playerFour + 250
+            tempScore4 = tempScore4 + 250
 
-        if playerOne > playerTwo and playerOne > playerThree and playerOne > playerFour:
+        # Check for same suit as lead
+        if self.getCardSuit(playerOne) == self.getCardSuit(self.moves[self.leader]):
+            tempScore1 = tempScore1 + 50
+        if self.getCardSuit(playerTwo) == self.getCardSuit(self.moves[self.leader]):
+            tempScore2 = tempScore2 + 50
+        if self.getCardSuit(playerThree) == self.getCardSuit(self.moves[self.leader]):
+            tempScore3 = tempScore3 + 50
+        if self.getCardSuit(playerFour) == self.getCardSuit(self.moves[self.leader]):
+            tempScore4 = tempScore4 + 50
+
+        if tempScore1 > tempScore2 and tempScore1 > tempScore3 and tempScore1 > tempScore4:
             self.leader = 0
+            self.newRound()
             return 0
-        elif playerTwo > playerOne and playerTwo > playerThree and playerTwo > playerFour:
+        elif tempScore2 > tempScore1 and tempScore2 > tempScore3 and tempScore2 > tempScore4:
             self.leader = 1
+            self.newRound()
             return 1
-        elif playerThree > playerOne and playerThree > playerTwo and playerThree > playerFour:
+        elif tempScore3 > tempScore1 and tempScore3 > tempScore2 and tempScore3 > tempScore4:
             self.leader = 2
+            self.newRound()
             return 2
-        elif playerFour > playerOne and playerFour > playerTwo and playerFour > playerThree:
+        elif tempScore4 > tempScore1 and tempScore4 > tempScore2 and tempScore4 > tempScore3:
             self.leader = 3
+            self.newRound()
             return 3
         else:
             return "This means it's broken"
 
     # Checks to see if either team has won, will be played between tricks. If no one has won, return "No"
     def checkWinner(self):
-        if (self.team1Score > 9) or (self.team2Score > 9):
-            if self.team1Score > 9:
-                self.gameEnd = True
+        if (self.team1Score > 0) or (self.team2Score > 0):
+            self.gameEnd = True
+            self.dealingPhase = False
+            if self.team1Score > 0:
                 self.winner = 1
             else:
-                self.gameEnd = True
                 self.winner = 2
         else:
             pass
-
-    # # checks if we have enough players to play
-    # def checkNumPlayers(self):
-    #     return len(self.players)
-
-    # # I don't think we need this.
-    # def connected(self):
-    #     return self.ready  # tells the server who is all connected
-
-    # # returns the cards available in a players hand that they can play
-    # def getPlayerHand(self, p):
-    #     return self.players[p]  # return the cards in that player's hand
