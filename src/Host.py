@@ -1,40 +1,158 @@
 """
-A file to hold the GUI logic and instantiation of the host server. When the user connects to the
-CentralServer with the intent to host games it will start a new instance of HostServerThread.
-HostServerThread will then create HostServerWorkerThreads as it receives connections from outside.
-After Host has created its own HostServer it will then connect to itself through a socket so all
-players can be handled the same way.
+A file to hold the logic for our P2P Euchre client. It acts as both a server and a client. 
 Run pip install pillow in the command line to access PIL
 """
 import tkinter as tk
 import tkinter.font
+import socket
+import pickle
+import _thread as _thr
+import sys
+import time
 from PIL import Image
 from PIL import ImageTk
+from euchre import Euchre
 
 HEIGHT = 750
 WIDTH = 800
 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-class Host():
-    name = ""
-    myIP = ""
-    myPort = ""
-    serverIP = ""
-    serverPort = ""
+connections = []
 
 
-def connect(name, myIP, myPort, serverIP, serverPort):
+def threaded(conn, consoleEntryRef):
+    # Update the game state
+    while True:
+        consoleDisplay['text'] = conn.recv(4096).decode()
+
+
+# a helper method to send information easier
+def sendMessage(conn, playerNum, message):
+    conn[playerNum].send(str.encode(message))
+
+
+# a helper message to recv information eaiser
+# conn.send(str.encode("GameState"))
+def recvMessage(conn, playerNum):
+    return conn[playerNum].recv(4096).decode()
+
+
+# THe server's gameLoop and connection logic
+def threadServer(sock, name, myIP, myPort, serverIP, serverPort):
+    try:
+        sock.bind((myIP, int(myPort)))
+        print("socket bound")
+    except socket.error as e:
+        print(str(e))
+    print(type(sock))
+    sock.listen()
+    print("waiting or players, server started")
+    connected = set()
+    game = Euchre()
+    player = 0
+    while True:  # Accept connections
+        conn, addr = sock.accept()
+        game.addPlayer(player)
+        player = player + 1
+        connections.append(conn)
+        print("Connected to: ", addr)
+        conn.send(("You are player " + str(player)).encode())
+        if player >= 4:
+            while True:  # GameLoop
+                if game.dealingPhase:
+                    game.gameLoop("nothing")
+                elif game.playingCardsPhase and len(game.moves) == 0:
+                    game.leader = (game.dealer + 1) % 4
+                    game.newRound()
+                    sendMessage(connections, game.turn, game.gameStateBuilder(game.turn, False))
+                    option = recvMessage(connections, game.turn)
+                    game.playCard(game.turn, int(option))
+                elif game.discardPhase:
+                    sendMessage(connections, game.dealer, game.gameStateBuilder(game.dealer, False))
+                    option = recvMessage(connections, game.dealer)
+                    game.gameLoop(option)
+                elif game.gameEnd:
+                    pass
+                else:
+                    try:
+                        sendMessage(connections, game.turn, game.gameStateBuilder(game.turn, False))
+                        option = recvMessage(connections, game.turn)
+                        game.gameLoop(option)
+                    except:
+                        e = sys.exc_info()[0]
+                        print(e)
+                        break
+                # Reporting Phase:
+                try:
+                    if not (game.discardPhase or game.dealingPhase):
+                        playerCursor = 0
+                        for conn in connections:
+                            conn.send(str.encode(game.gameStateBuilder(playerCursor, True)))
+                            playerCursor += 1
+                    else:
+                        playerCursor = 0
+                        for conn in connections:
+                            conn.send(str.encode("The dealer is picking their card"))
+                            playerCursor += 1
+                except:
+                    e = sys.exc_info()[0]
+                    print(e)
+                    break
+                if game.gameEnd:
+                    break
+        else:
+            pass
+            # print("Lost connection")
+            # conn.close()
+
+
+def connect(name, myIP, myPort, serverIP, serverPort, consoleInput):
     consoleDisplay['text'] = "username: " + name + "\nmyIP: " + myIP + "\nmyPort: " + myPort + "\nserverIP: " + serverIP + "\nserverPort: " + serverPort
-    print("DONE")
+    # con, addr = s.accept()
+    if myIP == "" and myPort == "":
+        # Connect to server
+        s.connect((serverIP, int(serverPort)))
+        # Convert inputs into dictionary
+        if consoleInput == "":  # Central Server Specific stuff here
+            msg = {"name": name, "myIP": myIP, "myPort": myPort, "serverIP": serverIP, "serverPort": serverPort}
+            # Serialize the data so we can send it over a socket
+            serialData = pickle.dumps(msg)
+            s.send(serialData)
+            # Receive the list of hosts and display it
+            serialList = s.recv(4096)
+            listHosts = pickle.loads(serialList)
+            displayText = ""
+            for item in listHosts:
+                for keys, values in item.items():
+                    displayText += (keys + " : " + values + "\n")
+                    print(keys + " : " + values + "\n")
+                    consoleDisplay['text'] = displayText
+        else:
+            _thr.start_new_thread(threaded, (s, consoleEntry.get(), ))
+    else:
+        _thr.start_new_thread(threadServer, (s, name, myIP, myPort, serverIP, serverPort, ))
+
+        time.sleep(0.5)
+
+        # Connect to the local server we are hosting
+        s2.connect((serverIP, int(serverPort)))
+        _thr.start_new_thread(threaded, (s2, consoleEntry.get(), ))
 
 
-def executeCommand(consoleEntry):
-    consoleDisplay['text'] = consoleEntry
-    print("DONE2")
+def executeCommand(consoleEntry, myIP, myPort):
+    # consoleDisplay['text'] = consoleEntry
+    # sendMessage(connections, game, consoleEntry)
+    if myIP == "" and myPort == "":
+        s.send(str.encode(consoleEntry))
+        print("sending stuff to server")
+    else:
+        s2.send(str.encode(consoleEntry))
+        print("sending stuff to server")
 
 
-ourHost = Host
-
+# ===========================GUI Code starts here===========================
 root = tk.Tk()
 
 canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH)
@@ -100,7 +218,7 @@ serverPortLabel.place(relx=0.025, rely=0.05, relwidth=0.45, relheight=0.9)
 serverPortEntry = tk.Entry(serverPortFrame, font=('Courier', 12))
 serverPortEntry.place(relx=0.525, rely=0.05, relwidth=0.45, relheight=0.9)
 
-connectButton = tk.Button(connectButtonFrame, text="Connect", font=('Courier', 12), command=lambda: connect(nameEntry.get(), myIPEntry.get(), myPortEntry.get(), serverIPEntry.get(), serverPortEntry.get()))
+connectButton = tk.Button(connectButtonFrame, text="Connect", font=('Courier', 12), command=lambda: connect(nameEntry.get(), myIPEntry.get(), myPortEntry.get(), serverIPEntry.get(), serverPortEntry.get(), consoleEntry.get()))
 connectButton.place(relx=0, relheight=1, relwidth=1)
 
 consoleDisplay = tk.Label(consoleFrame, font=('Courier', 12))
@@ -109,7 +227,9 @@ consoleDisplay.place(relwidth=1, relheight=0.82)
 consoleEntry = tk.Entry(consoleFrame, font=('Courier', 12))
 consoleEntry.place(relx=0, rely=0.85, relheight=0.15, relwidth=0.65)
 
-executeButton = tk.Button(consoleFrame, text="Execute", font=('Courier', 12), command=lambda: executeCommand(consoleEntry.get()))
+executeButton = tk.Button(consoleFrame, text="Execute", font=('Courier', 12), command=lambda: executeCommand(consoleEntry.get(), myIPEntry.get(), myPortEntry.get()))
 executeButton.place(relx=0.7, rely=0.85, relheight=0.15, relwidth=0.3)
+# ===========================GUI Code ends here===========================
 
+# Frames are filled, now running the loop
 root.mainloop()

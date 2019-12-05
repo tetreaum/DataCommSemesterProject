@@ -1,10 +1,12 @@
 [flake8]
-ignore = E501, W293, E722, C901
+ignore = E501, W293, E722, C901, F841
 exclude =
     .git,
     __pycache__,
     docs/source/conf.py,
     old,
     build,
-    dist
+    dist,
+    gameLogic,
+    oldSRC
 max-complexity = 10
