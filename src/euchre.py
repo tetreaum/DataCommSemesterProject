@@ -67,7 +67,7 @@ class Euchre:
     # A helper method to build tempCardsInHand for gameStateBuilder
     def buildTempCardsInHand(self, playerNum):
         counter = 1
-        tempCardsInHand = ""
+        tempCardsInHand = self.getCardSuitText(self.trump)
         for card in self.players[playerNum]:
             tempCardsInHand = tempCardsInHand + "\n" + str(counter) + ": " + self.getCardText(card) + " of " + self.getCardSuitText(card)
             counter = counter + 1
@@ -91,7 +91,7 @@ class Euchre:
     def buildTempCardsOnTable(self):
         tempCardsOnTable = ""
         for move in self.moves:
-            tempCardsOnTable = tempCardsOnTable + "Player " + self.moves[move] + " played the " + self.getCardText(self.move) + " of " + self.getCardSuitText(move)
+            tempCardsOnTable = tempCardsOnTable + "\nPlayer " + str(move) + ": played the " + self.getCardText(self.moves[move]) + " of " + self.getCardSuitText(self.moves[move])
         return tempCardsOnTable
 
     def gameLoop(self, option):
@@ -193,8 +193,9 @@ class Euchre:
 
     # a client tells the server what card they want to play
     def playCard(self, player, move):
-        self.moves[player] = self.players[player][move]  # the player will tell the HostServer what it wants to play
-        self.players[player].pop(move)  # Note this might be wrong
+        self.moves[player] = self.players[player][move - 1]  # the player will tell the HostServer what it wants to play
+        self.players[player].pop(move - 1)  # Note this might be wrong
+        self.iterateTurn()
 
     # If the player says "yes" take trump, else, next move
     def pickTrumpStage1(self, player, move):
@@ -212,7 +213,7 @@ class Euchre:
         for suit in self.suits:
             if suit != self.getCardSuit(self.kitty):
                 tempSuits.append(suit)
-        self.trump = tempSuits[option]
+        self.trump = tempSuits[option - 1]
         self.turn = (self.dealer + 1) % 4
         self.choosingTrumpPhase2 = False
         self.playingCardsPhase = True
@@ -254,7 +255,7 @@ class Euchre:
         elif suitNum == 3:
             return "Spades"
         else:
-            return "This text should never appear (See getCardText)"
+            return "Trump Not Selected Yet"
 
     # Helper method to get if the card is a left bower
     def suitComp(self, index):
@@ -269,6 +270,7 @@ class Euchre:
 
     # Compares cards from each hand, returns the number of the player who won the trick
     def scoreTrick(self, playerOne, playerTwo, playerThree, playerFour):
+
         # Checks for right bower or trump
         if self.getCardSuit(playerOne) == self.trump:
             if self.getCard(playerOne) == 3:
@@ -303,15 +305,19 @@ class Euchre:
 
         if playerOne > playerTwo and playerOne > playerThree and playerOne > playerFour:
             self.leader = 0
+            self.newRound()
             return 0
         elif playerTwo > playerOne and playerTwo > playerThree and playerTwo > playerFour:
             self.leader = 1
+            self.newRound()
             return 1
         elif playerThree > playerOne and playerThree > playerTwo and playerThree > playerFour:
             self.leader = 2
+            self.newRound()
             return 2
         elif playerFour > playerOne and playerFour > playerTwo and playerFour > playerThree:
             self.leader = 3
+            self.newRound()
             return 3
         else:
             return "This means it's broken"
